@@ -33,7 +33,6 @@ package org.cytoscape.biopax.internal.util;
 
 import java.util.*;
 
-import org.cytoscape.biopax.internal.ExternalLink;
 
 
 
