@@ -1,27 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>biopax-impl</artifactId>
+	<groupId>org.cytoscape</groupId>
+	<artifactId>biopax</artifactId>
+	<version>3.3.0-SNAPSHOT</version>
 	<name>BioPAX Reader for Cytoscape</name>
 	<packaging>bundle</packaging>
 
-	<parent>
-		<groupId>org.cytoscape</groupId>
-		<artifactId>impl-parent</artifactId>
-		<version>3.3.0-SNAPSHOT</version>
-	</parent>
-	
 	<properties>
+		<!-- General Cytoscape props -->
 		<bundle.namespace>org.cytoscape.biopax.internal</bundle.namespace>
+		<cytoscape.api.version>3.3.0-SNAPSHOT</cytoscape.api.version>
+		<osgi.api.version>4.2.0</osgi.api.version>
 		<paxtools.version>4.2.1</paxtools.version>
+		
+		<!-- Maven Plugin Settings -->
+		<junit.version>4.12</junit.version>
+		<maven-compiler-plugin.version>3.3</maven-compiler-plugin.version>
+		<maven-bundle-plugin.version>2.5.4</maven-bundle-plugin.version>
 	</properties>
 
+	<scm>
+		<connection>scm:git:git://github.com/cytoscape/biopax.git</connection>
+		<developerConnection>scm:git:git@github.com:cytoscape/biopax.git</developerConnection>
+		<url>https://github.com/cytoscape/biopax.git</url>
+	</scm>
+
+	<distributionManagement>
+		<repository>
+			<id>releases</id>
+			<name>Internal Releases</name>
+			<url>http://code.cytoscape.org/nexus/content/repositories/releases</url>
+		</repository>
+		<snapshotRepository>
+			<id>snapshots</id>
+			<name>Internal Snapshots</name>
+			<url>http://code.cytoscape.org/nexus/content/repositories/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
+
 	<build>
-		<plugins>	
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>${maven-compiler-plugin.version}</version>
+				<extensions>true</extensions>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+					<encoding>UTF-8</encoding>
+					<optimize>true</optimize>
+					<showWarnings>true</showWarnings>
+					<showDeprecation>true</showDeprecation>
+					<compilerArguments>
+						<Xmaxwarns>10000</Xmaxwarns>
+						<Xmaxerrs>10000</Xmaxerrs>
+					</compilerArguments>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
@@ -59,119 +99,200 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
 		</dependencies>
 	</dependencyManagement>
 	
+	<repositories>
+		<repository>
+			<id>cytoscape_snapshots</id>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<name>Cytoscape Snapshots</name>
+			<url>http://code.cytoscape.org/nexus/content/repositories/snapshots/</url>
+		</repository>
+		<repository>
+			<id>cytoscape_releases</id>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<name>Cytoscape Releases</name>
+			<url>http://code.cytoscape.org/nexus/content/repositories/releases/</url>
+		</repository>
+		<repository>
+			<id>cytoscape_thirdparty</id>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<name>Cytoscape Third Party</name>
+			<url>http://code.cytoscape.org/nexus/content/repositories/thirdparty/</url>
+		</repository>
+		<repository>
+			<id>cytoscape_biopax_release</id>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<name>Cytoscape BioPAX Release Mirror</name>
+			<url>http://code.cytoscape.org/nexus/content/repositories/biopax-release/</url>
+		</repository>
+		<repository>
+			<id>cytoscape_biopax_snapshot</id>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<name>Cytoscape BioPAX Snapshot Mirror</name>
+			<url>http://code.cytoscape.org/nexus/content/repositories/biopax-snapshot/</url>
+		</repository>
+	</repositories>
+
 	<dependencies>
-        <dependency>
-            <groupId>org.cytoscape</groupId>
-            <artifactId>io-api</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.cytoscape</groupId>
-            <artifactId>model-api</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.cytoscape</groupId>
-            <artifactId>work-api</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.cytoscape</groupId>
-            <artifactId>core-task-api</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-        	<groupId>org.cytoscape</groupId>
-        	<artifactId>swing-application-api</artifactId>
-        	<scope>provided</scope>
-        </dependency>
-        <dependency>
-        	<groupId>org.cytoscape</groupId>
-        	<artifactId>viewmodel-api</artifactId>
-        	<scope>provided</scope>
-        </dependency>
-        <dependency>
-        	<groupId>org.cytoscape</groupId>
-        	<artifactId>swing-util-api</artifactId>
-        	<scope>provided</scope>
-        </dependency>
+		<dependency>
+			<groupId>org.ops4j.pax.logging</groupId>
+			<artifactId>pax-logging-api</artifactId>
+			<version>1.5.2</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.core</artifactId>
+			<version>${osgi.api.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.cytoscape</groupId>
+			<artifactId>io-api</artifactId>
+			<version>${cytoscape.api.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.cytoscape</groupId>
+			<artifactId>model-api</artifactId>
+			<version>${cytoscape.api.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.cytoscape</groupId>
+			<artifactId>work-api</artifactId>
+			<version>${cytoscape.api.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.cytoscape</groupId>
+			<artifactId>core-task-api</artifactId>
+			<version>${cytoscape.api.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.cytoscape</groupId>
+			<artifactId>swing-application-api</artifactId>
+			<version>${cytoscape.api.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.cytoscape</groupId>
+			<artifactId>viewmodel-api</artifactId>
+			<version>${cytoscape.api.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.cytoscape</groupId>
+			<artifactId>swing-util-api</artifactId>
+			<version>${cytoscape.api.version}</version>
+			<scope>provided</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.cytoscape</groupId>
 			<artifactId>layout-api</artifactId>
+			<version>${cytoscape.api.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.cytoscape</groupId>
 			<artifactId>group-api</artifactId>
+			<version>${cytoscape.api.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.cytoscape</groupId>
 			<artifactId>service-api</artifactId>
+			<version>${cytoscape.api.version}</version>
 			<scope>provided</scope>
-		</dependency>		
-        <dependency>
-	        <groupId>org.biopax.paxtools</groupId>
-	        <artifactId>paxtools-core</artifactId>
-	        <version>${paxtools.version}</version>
-	        <exclusions>
-	        	<exclusion>
-	        		<artifactId>log4j</artifactId>
-	        		<groupId>log4j</groupId>
-	        	</exclusion>
-	        	<exclusion>
-	        		<artifactId>commons-logging</artifactId>
-	        		<groupId>commons-logging</groupId>
-	        	</exclusion>
-	        </exclusions>
-        </dependency>
-        <dependency>
-	        <groupId>org.biopax.paxtools</groupId>
-	        <artifactId>sif-converter</artifactId>
-	        <version>${paxtools.version}</version>
-	        <exclusions>
-	        	<exclusion>
-	        		<artifactId>log4j</artifactId>
-	        		<groupId>log4j</groupId>
-	        	</exclusion>
-	        	<exclusion>
-	        		<artifactId>commons-logging</artifactId>
-	        		<groupId>commons-logging</groupId>
-	        	</exclusion>
-	        </exclusions>
-        </dependency>
-        <dependency>
-	        <groupId>org.biopax.paxtools</groupId>
-	        <artifactId>sbgn-converter</artifactId>
-	        <version>${paxtools.version}</version>
-	        <exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.biopax.paxtools</groupId>
+			<artifactId>paxtools-core</artifactId>
+			<version>${paxtools.version}</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>log4j</artifactId>
+					<groupId>log4j</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>commons-logging</artifactId>
+					<groupId>commons-logging</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.biopax.paxtools</groupId>
+			<artifactId>sif-converter</artifactId>
+			<version>${paxtools.version}</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>log4j</artifactId>
+					<groupId>log4j</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>commons-logging</artifactId>
+					<groupId>commons-logging</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.biopax.paxtools</groupId>
+			<artifactId>sbgn-converter</artifactId>
+			<version>${paxtools.version}</version>
+			<exclusions>
 				<exclusion>
 					<!-- w/o this one excluded, BioPAX parser (Paxtools's SimpleIOHandler) 
-					fails due to unable to discover proper StAX impl.-->
-	        		<artifactId>jsr173_api</artifactId>
-	        		<groupId>javax.xml.bind</groupId>
-	        	</exclusion>
-	        	<exclusion>
-	        		<artifactId>log4j</artifactId>
-	        		<groupId>log4j</groupId>
-	        	</exclusion>
-	        	<exclusion>
-	        		<artifactId>commons-logging</artifactId>
-	        		<groupId>commons-logging</groupId>
-	        	</exclusion>
-	        </exclusions>
-        </dependency>                
-        <dependency>
-            <groupId>cytoscape-temp</groupId>
-            <artifactId>woodstox-core-lgpl</artifactId>
-            <version>[4.0.5, 5.0.0)</version>
-            <scope>provided</scope>
-        </dependency>
+						fails due to unable to discover proper StAX impl. -->
+					<artifactId>jsr173_api</artifactId>
+					<groupId>javax.xml.bind</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>log4j</artifactId>
+					<groupId>log4j</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>commons-logging</artifactId>
+					<groupId>commons-logging</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>cytoscape-temp</groupId>
+			<artifactId>woodstox-core-lgpl</artifactId>
+			<version>[4.0.5, 5.0.0)</version>
+			<scope>provided</scope>
+		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
+			<version>${junit.version}</version>
 			<scope>test</scope>
-		</dependency>	
+		</dependency>
 	</dependencies>
-
 </project>
