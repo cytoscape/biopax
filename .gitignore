@@ -1,8 +1,10 @@
-json-impl/src/test/resources/site/.idea
 .DS_Store
-target/
+target
 .project
-.settings/
+.settings
 .classpath
 bin/
 *node_modules/
+*.iml
+.idea
+.springBeans
