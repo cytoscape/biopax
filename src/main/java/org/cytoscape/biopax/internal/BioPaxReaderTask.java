@@ -48,6 +48,8 @@ import org.biopax.paxtools.model.BioPAXElement;
 import org.biopax.paxtools.model.Model;
 import org.biopax.paxtools.model.level3.Entity;
 import org.biopax.paxtools.model.level3.EntityReference;
+import org.biopax.paxtools.pattern.miner.SIFEnum;
+import org.biopax.paxtools.pattern.miner.SIFType;
 import org.cytoscape.application.NetworkViewRenderer;
 import org.cytoscape.biopax.internal.util.AttributeUtil;
 import org.cytoscape.biopax.internal.util.BioPaxReaderError;
@@ -159,19 +161,17 @@ public class BioPaxReaderTask extends AbstractTask implements CyNetworkReader {
 	public ListSingleSelection<ReaderMode> readerMode;
 		
 	@Tunable(description = "Network Collection:" , groups = {"Options","Default"}, tooltip="Choose a Network Collection", 
-			dependsOn="readerMode=Default", 
-			gravity=701, xorKey="Default")
+			dependsOn="readerMode=Default", gravity=701, xorKey="Default")
 	public ListSingleSelection<String> rootNetworkSelection;
 	
 	@Tunable(description = "Network View Renderer:", groups = {"Options","Default"}, gravity=702, xorKey="Default", dependsOn="readerMode=Default")
 	public ListSingleSelection<NetworkViewRenderer> rendererList;
 
-	//TODO select inference rules (multi-selection) for the SIF converter
-	//TODO migrate from sif-converter to new biopax pattern module
-	@Tunable(description = "Binary interactions to infer:" , groups = {"Options","SIF"}, tooltip="Select inference rules", 
-			gravity=703, xorKey="SIF")
-	public ListMultipleSelection<String> sifSelection;
-	
+	//select inference rules (multi-selection) for the SIF converter
+	@Tunable(description = "Binary interactions to infer:" , groups = {"Options","SIF"}, tooltip="Select inference patterns/rules to search/apply",
+			gravity=703, xorKey="SIF", dependsOn = "readerMode=SIF")
+	public ListMultipleSelection<SIFType> sifSelection;
+
 	//TODO init SBGN options if required
 	@Tunable(description = "SBGN Options:" , groups = {"Options","SBGN"}, tooltip="Currently not available", 
 			gravity=704, xorKey="SBGN")
@@ -180,9 +180,10 @@ public class BioPaxReaderTask extends AbstractTask implements CyNetworkReader {
 	/**
 	 * Constructor
 	 * 
-	 * @param stream
+	 * @param stream input biopax stream
 	 * @param inputName a file or pathway name (can be later updated using actual data)
-	 * @param cyServices
+	 * @param cyServices api services
+	 * @param visualStyleUtil  biopax/sif visual style utilities
 	 */
 	public BioPaxReaderTask(InputStream stream, String inputName, 
 			CyServices cyServices, VisualStyleUtil visualStyleUtil) 
@@ -205,18 +206,21 @@ public class BioPaxReaderTask extends AbstractTask implements CyNetworkReader {
 		rootNames.addAll(nameToRootNetworkMap.keySet());
 		rootNetworkSelection = new ListSingleSelection<String>(rootNames);
 		rootNetworkSelection.setSelectedValue(CREATE_NEW_COLLECTION);
-		
+
+		// initialize the list of data processing modes
 		readerMode = new ListSingleSelection<>(ReaderMode.values());
-		readerMode.setSelectedValue(ReaderMode.DEFAULT);	
+		readerMode.setSelectedValue(ReaderMode.DEFAULT);
 		
-		sifSelection = new ListMultipleSelection<String>();
+		// init the SIF rules/patterns list
+		sifSelection = new ListMultipleSelection<SIFType>(SIFEnum.values());
+		sifSelection.setSelectedValues(sifSelection.getPossibleValues());
+
+		//TODO init SBGN options
 		sbgnSelection = new ListSingleSelection<String>();
 		
 		// initialize renderer list
 		final List<NetworkViewRenderer> renderers = new ArrayList<>();
-		
 		final Set<NetworkViewRenderer> rendererSet = cyServices.applicationManager.getNetworkViewRendererSet();
-		
 		// If there is only one registered renderer, we don't want to add it to the List Selection,
 		// so the combo-box does not appear to the user, since there is nothing to select anyway.
 		if (rendererSet.size() > 1) {
@@ -228,7 +232,6 @@ public class BioPaxReaderTask extends AbstractTask implements CyNetworkReader {
 				}
 			});
 		}
-		
 		rendererList = new ListSingleSelection<>(renderers);
 	}
 	
@@ -281,16 +284,18 @@ public class BioPaxReaderTask extends AbstractTask implements CyNetworkReader {
 			networks.add(network);
 			break;
 		case SIF:
-			//convert to EXTENDED SIF
+			//convert to the Pathway Commons' EXTENDED_BINARY_SIF
 			taskMonitor.setStatusMessage("Mapping BioPAX model to SIF, then to " +
 					"CyNetwork (using the first discovered SIF reader)...");
 			final File sifEdgesFile = File.createTempFile("tmp_biopax2sif_edges", ".sif");
 			sifEdgesFile.deleteOnExit();
 			final File sifNodesFile = File.createTempFile("tmp_biopax2sif_nodes", ".sif");
 			sifNodesFile.deleteOnExit();
-			//TODO change - to use only selected (via tunables dialog) sif rules
-			BioPaxMapper.convertToExtendedBinarySIF(model, 
-					new FileOutputStream(sifEdgesFile), new FileOutputStream(sifNodesFile), null);
+
+			BioPaxMapper.convertToExtendedBinarySIF(model,
+					sifSelection.getSelectedValues().toArray(new SIFType[]{}),
+					new FileOutputStream(sifEdgesFile), new FileOutputStream(sifNodesFile));
+
 			//TODO option: generate and use blacklist
 			// try to discover a SIF reader and pass the data there
 			anotherReader =  cyServices.networkViewReaderManager.getReader(sifEdgesFile.toURI(), networkName);		

@@ -42,13 +42,12 @@ import org.biopax.paxtools.controller.SimpleEditorMap;
 import org.biopax.paxtools.converter.LevelUpgrader;
 import org.biopax.paxtools.io.SimpleIOHandler;
 import org.biopax.paxtools.io.sbgn.L3ToSBGNPDConverter;
-import org.biopax.paxtools.io.sif.InteractionRule;
-import org.biopax.paxtools.io.sif.SimpleInteractionConverter;
 import org.biopax.paxtools.model.BioPAXElement;
 import org.biopax.paxtools.model.BioPAXLevel;
 import org.biopax.paxtools.model.Model;
 import org.biopax.paxtools.model.level3.*;
 import org.biopax.paxtools.model.level3.Process;
+import org.biopax.paxtools.pattern.miner.*;
 import org.biopax.paxtools.util.ClassFilterSet;
 import org.biopax.paxtools.util.Filter;
 import org.cytoscape.biopax.internal.util.AttributeUtil;
@@ -69,7 +68,7 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * Maps a BioPAX Model to Cytoscape Nodes/Edges.
+ * Maps a BioPAX Model to Cytoscape network.
  *
  * @author Ethan Cerami, Igor Rodchenkov (major re-factoring using PaxTools API)
  */
@@ -187,7 +186,6 @@ public class BioPaxMapper {
 	 * 
 	 * @param model
 	 * @param cyNetworkFactory
-	 * @param taskMonitor
 	 */
 	public BioPaxMapper(Model model, CyNetworkFactory cyNetworkFactory) {
 		this.model = model;
@@ -278,7 +276,7 @@ public class BioPaxMapper {
 		for (Interaction itr : interactionList) {	
 			if(log.isTraceEnabled()) {
 				log.trace("Mapping " + itr.getModelInterface().getSimpleName() 
-					+ " edges : " + itr.getRDFId());
+					+ " edges : " + itr.getUri());
 			}
 			
 			if (itr instanceof Conversion) {
@@ -352,14 +350,14 @@ public class BioPaxMapper {
 		CyNode nodeA = bpeToCyNodeMap.get(bpeA);
 		if(nodeA == null) {
 			log.debug("linkNodes: no node was created for " 
-				+ bpeA.getModelInterface() + " " + bpeA.getRDFId());
+				+ bpeA.getModelInterface() + " " + bpeA.getUri());
 			return; //e.g., we do not create any pathway nodes currently...
 		}
 		
 		CyNode nodeB = bpeToCyNodeMap.get(bpeB);
 		if(nodeB == null) {
 			log.debug("linkNodes: no node was created for " 
-					+ bpeB.getModelInterface() + " " + bpeB.getRDFId());
+					+ bpeB.getModelInterface() + " " + bpeB.getUri());
 			return; //e.g., we do not create any pathway nodes currently...
 		}
 		
@@ -532,10 +530,10 @@ public class BioPaxMapper {
     	if(resource instanceof PhysicalEntity || 
     			resource instanceof EntityReference) 
     	{
-    		String u = resource.getRDFId(); 
+    		String u = resource.getUri();
     		if(resource instanceof SimplePhysicalEntity && 
     			((SimplePhysicalEntity) resource).getEntityReference() != null)
-    			u = ((SimplePhysicalEntity) resource).getEntityReference().getRDFId();
+    			u = ((SimplePhysicalEntity) resource).getEntityReference().getUri();
 			
     		if(u.startsWith("http://identifiers.org/uniprot")) { 
 				// /uniprot.isoform/ works here as well
@@ -687,13 +685,17 @@ public class BioPaxMapper {
 		@SuppressWarnings("unchecked")
 		AbstractTraverser bpeAutoMapper = new AbstractTraverser(SimpleEditorMap.L3, filter) 
 		{
+			final Stack<String> propPath = new Stack<String>();
+
 			@SuppressWarnings("rawtypes")
 			@Override
 			protected void visit(Object obj, BioPAXElement bpe, Model model,
 					PropertyEditor editor) 
 			{
-				String attrName = getAttrName(getProps());
 				if (obj != null && !editor.isUnknown(obj)) {
+					propPath.push(editor.getProperty());
+
+					final String attrName = StringUtils.join(propPath, "/");
 					String value = obj.toString();
 					if (!"".equalsIgnoreCase(value.toString().replaceAll("\\]|\\[", ""))) 
 					{
@@ -730,16 +732,14 @@ public class BioPaxMapper {
 					{
 						traverse((BioPAXElement) obj, null);
 					}
-				}
-			}
 
-			private String getAttrName(Stack<String> props) {
-				return StringUtils.join(props, "/");
+					propPath.pop();
+				}
 			}
 		};
 
 		// set the most important attributes
-		AttributeUtil.set(network, node, BIOPAX_URI, element.getRDFId(), String.class);
+		AttributeUtil.set(network, node, BIOPAX_URI, element.getUri(), String.class);
 		AttributeUtil.set(network, node, BIOPAX_ENTITY_TYPE, element.getModelInterface().getSimpleName(), String.class);	
 		
 		// add a piece of the BioPAX (RDF/XML without parent|child elements)	
@@ -910,7 +910,7 @@ public class BioPaxMapper {
 			nodeName = ((Named)bpe).getDisplayName();
 
 		return (nodeName == null || nodeName.isEmpty())
-				? bpe.getRDFId() 
+				? bpe.getUri()
 					: StringEscapeUtils.unescapeHtml(nodeName);
 	}
 	
@@ -940,7 +940,7 @@ public class BioPaxMapper {
 				if(log.isDebugEnabled()) {
 					// this is often OK, as we guess L2 or L3 properties...
 					log.debug("Ignore property " + property + " for " 
-						+ bpe.getRDFId() + ": " + e);
+						+ bpe.getUri() + ": " + e);
 				}
 			}
 		}
@@ -976,7 +976,7 @@ public class BioPaxMapper {
 			} catch (Exception e) {
 				if(log.isDebugEnabled()) {
 					log.debug("Cannot get value of '" + property + "' for "
-						+ bpe.getRDFId() + ": " + e);
+						+ bpe.getUri() + ": " + e);
 				}
 			}
 		}
@@ -1169,7 +1169,7 @@ public class BioPaxMapper {
 				try {
 					simpleExporter.writeObject(writer, bpe);
 				} catch (Exception e) {
-					log.error("Failed printing '" + bpe.getRDFId() + "' to OWL", e);
+					log.error("Failed printing '" + bpe.getUri() + "' to OWL", e);
 				}
 			}
 		}, com.ctc.wstx.stax.WstxInputFactory.class);
@@ -1213,35 +1213,32 @@ public class BioPaxMapper {
 	
 
 	/**
-	 * Converts a BioPAX Model to the EXTENDED SIF format.
+	 * Converts a BioPAX Model to the Pathway Commons'
+	 * Simple Interactions Format (EXTENDED_BINARY_SIF).
 	 * 
-	 * @param m
-	 * @param edgeStream
-	 * @param nodeStream
-	 * @param sifRules TODO
-	 * @throws IOException
+	 * @param m biopax model
+	 * @param sifTypes SIF rules/patterns to use
+	 * @param edgeStream output stream for interactions (edges)
+	 * @param nodeStream output stream for participants (nodes details)
+	 * @throws IOException when data cannot be written, etc.
 	 */
-	public static void convertToExtendedBinarySIF(Model m, OutputStream edgeStream, 
-			OutputStream nodeStream, Collection<InteractionRule> sifRules) 
-					throws IOException {
-//		final String edgeColumns = "#PARTICIPANT_A\tINTERACTION_TYPE\tPARTICIPANT_B\tINTERACTION_DATA_SOURCE\tINTERACTION_PUBMED_ID\n";
-//		edgeStream.write(edgeColumns.getBytes());
-//		final String nodeColumns = "#PARTICIPANT\tPARTICIPANT_TYPE\tPARTICIPANT_NAME\tUNIFICATION_XREF\tRELATIONSHIP_XREF\n";	
-//		nodeStream.write(nodeColumns.getBytes());
-		
-		SimpleInteractionConverter sic = new SimpleInteractionConverter(
-                new HashMap(),
-                null, //no blacklist (the list of ubiquitous molecules to ignore, which depends on biopax data source...)
-                (sifRules==null || sifRules.isEmpty()) 
-                	? SimpleInteractionConverter.getRules(BioPAXLevel.L3).toArray(new InteractionRule[]{})
-                		: sifRules.toArray(new InteractionRule[]{})
-			);
-		//merge interactions with exactly same properties, which dirty the result of the biopax-sif conversion...
-		ModelUtils.mergeEquivalentInteractions(m);		
-		sic.writeInteractionsInSIFNX(
-			m, edgeStream, nodeStream,
-			Arrays.asList("EntityReference/displayName", "EntityReference/xref:UnificationXref"),
-			null, true);
+	public static void convertToExtendedBinarySIF(
+			Model m,
+//			String idType, //default is URI; TODO use/set preferred nucl.acid/protein ID type later on...
+			SIFType[] sifTypes, //SIF rules/patterns to apply/search
+			OutputStream edgeStream,
+			OutputStream nodeStream
+	) throws IOException {
+
+		//merge interactions with exactly same properties...
+		ModelUtils.mergeEquivalentInteractions(m);
+
+		SIFSearcher sifSearcher = new SIFSearcher(new SimpleIDFetcher(), sifTypes);
+		Set<SIFInteraction> binaryInts = sifSearcher.searchSIF(m);
+
+		// towrite edgeStream, nodeStream
+		OldFormatWriter.writeInteractions(binaryInts, edgeStream);
+		OldFormatWriter.writeParticipants(binaryInts, nodeStream);
 	}	
 	
 	
