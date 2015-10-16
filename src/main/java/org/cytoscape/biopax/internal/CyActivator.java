@@ -24,8 +24,6 @@ package org.cytoscape.biopax.internal;
  * #L%
  */
 
-//import org.biopax.paxtools.io.SimpleIOHandler;
-//import org.biopax.paxtools.model.Model;
 import org.cytoscape.util.swing.OpenBrowser;
 import org.cytoscape.view.vizmap.VisualMappingManager;
 import org.cytoscape.view.layout.CyLayoutAlgorithmManager;
@@ -44,8 +42,6 @@ import org.cytoscape.work.TaskManager;
 import org.cytoscape.work.swing.DialogTaskManager;
 import org.cytoscape.work.undo.UndoSupport;
 
-import org.cytoscape.biopax.internal.BioPaxFilter;
-import org.cytoscape.biopax.internal.BioPaxReader;
 import org.cytoscape.biopax.internal.util.VisualStyleUtil;
 
 import org.cytoscape.model.subnetwork.CyRootNetworkManager;
@@ -75,12 +71,14 @@ public class CyActivator extends AbstractCyActivator {
 		CyNetworkManager cyNetworkManager = getService(bc,CyNetworkManager.class);
 		CyNetworkNaming cyNetworkNaming = getService(bc,CyNetworkNaming.class);
 		CyNetworkFactory cyNetworkFactory = getService(bc,CyNetworkFactory.class);
-		CyNetworkViewFactory cyNetworkViewFactory = getService(bc,CyNetworkViewFactory.class);
+//		CyNetworkViewFactory cyNetworkViewFactory = getService(bc,CyNetworkViewFactory.class);
 		StreamUtil streamUtil = getService(bc,StreamUtil.class);
 		VisualMappingManager visualMappingManager = getService(bc,VisualMappingManager.class);
 		VisualStyleFactory visualStyleFactory = getService(bc,VisualStyleFactory.class);
-		VisualMappingFunctionFactory discreteMappingFunctionFactory = getService(bc,VisualMappingFunctionFactory.class,"(mapping.type=discrete)");
-		VisualMappingFunctionFactory passthroughMappingFunctionFactory = getService(bc,VisualMappingFunctionFactory.class,"(mapping.type=passthrough)");
+		VisualMappingFunctionFactory discreteMappingFunctionFactory =
+				getService(bc,VisualMappingFunctionFactory.class,"(mapping.type=discrete)");
+		VisualMappingFunctionFactory passthroughMappingFunctionFactory =
+				getService(bc,VisualMappingFunctionFactory.class,"(mapping.type=passthrough)");
 		CyLayoutAlgorithmManager cyLayoutAlgorithmManager = getService(bc,CyLayoutAlgorithmManager.class);	
 		TaskManager taskManager = getService(bc, DialogTaskManager.class);
 		CyProperty<Properties> cyProperties = getService(bc, CyProperty.class, "(cyPropertyName=cytoscape3.props)");

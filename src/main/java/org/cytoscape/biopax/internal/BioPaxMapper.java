@@ -47,7 +47,11 @@ import org.biopax.paxtools.model.BioPAXLevel;
 import org.biopax.paxtools.model.Model;
 import org.biopax.paxtools.model.level3.*;
 import org.biopax.paxtools.model.level3.Process;
-import org.biopax.paxtools.pattern.miner.*;
+import org.biopax.paxtools.pattern.miner.OldFormatWriter;
+import org.biopax.paxtools.pattern.miner.SIFInteraction;
+import org.biopax.paxtools.pattern.miner.SIFSearcher;
+import org.biopax.paxtools.pattern.miner.SIFType;
+import org.biopax.paxtools.pattern.miner.SimpleIDFetcher;
 import org.biopax.paxtools.util.ClassFilterSet;
 import org.biopax.paxtools.util.Filter;
 import org.cytoscape.biopax.internal.util.AttributeUtil;
@@ -64,7 +68,6 @@ import org.cytoscape.model.subnetwork.CyRootNetwork;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 
 /**

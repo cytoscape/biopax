@@ -42,7 +42,7 @@ import org.cytoscape.io.util.StreamUtil;
  * BioPax Filer class.  Extends CyFileFilter for integration into the Cytoscape ImportHandler
  * framework.
  *
- * @author Ethan Cerami; (refactored by) Jason Montojo and Igor Rodchenkov
+ * @author Ethan Cerami; (refactored by) Jason Montojo, Igor Rodchenkov
  */
 public class BioPaxFilter extends BasicCyFileFilter {
 	private static final String BIOPAX_NAMESPACE_STARTS_WITH= "http://www.biopax.org/release/biopax";
@@ -62,16 +62,10 @@ public class BioPaxFilter extends BasicCyFileFilter {
 	}
 
 	/**
-	 * Indicates which files the BioPaxFilter accepts.
-	 * <p/>
-	 * This method will return true only if:
-	 * <UL>
-	 * <LI>File ends in .xml or .owl;  and
-	 * <LI>File headers includes the www.biopax.org namespace declaration.
-	 * </UL>
+	 * Indicates which data the BioPAX reader app accepts.
 	 *
-	 * @param file File
-	 * @return true or false.
+	 * This method will return true only if a file ends in .xml or .owl, and
+	 * headers include the www.biopax.org namespace declaration.
 	 */
 	@Override
 	public boolean accepts(InputStream stream, DataCategory category) {
@@ -95,7 +89,6 @@ public class BioPaxFilter extends BasicCyFileFilter {
 
 		return false;
 	}
-
 
 	@Override
 	public boolean accepts(URI uri, DataCategory category) {

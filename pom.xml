@@ -102,6 +102,12 @@
 	
 	<repositories>
 		<repository>
+			<!-- Paxtools snapshots are there -->
+			<id>ossrh</id>
+			<name>OSSRH Repository</name>
+			<url>https://oss.sonatype.org/content/groups/public/</url>
+		</repository>
+		<repository>
 			<id>cytoscape_snapshots</id>
 			<snapshots>
 				<enabled>true</enabled>
@@ -133,12 +139,6 @@
 			</releases>
 			<name>Cytoscape Third Party</name>
 			<url>http://code.cytoscape.org/nexus/content/repositories/thirdparty/</url>
-		</repository>
-		<repository>
-			<!-- Paxtools snapshots are there -->
-			<id>ossrh</id>
-			<name>OSSRH Repository</name>
-			<url>https://oss.sonatype.org/content/groups/public/</url>
 		</repository>
 	</repositories>
 
