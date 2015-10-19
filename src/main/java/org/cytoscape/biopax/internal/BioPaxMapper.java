@@ -1235,13 +1235,11 @@ public class BioPaxMapper {
 
 		//merge interactions with exactly same properties...
 		ModelUtils.mergeEquivalentInteractions(m);
-
+		//convert to binary interactions
 		SIFSearcher sifSearcher = new SIFSearcher(new SimpleIDFetcher(), sifTypes);
 		Set<SIFInteraction> binaryInts = sifSearcher.searchSIF(m);
-
-		// towrite edgeStream, nodeStream
+		// write interactions and some of their attributes (publications, datasources, pathways)
 		OldFormatWriter.writeInteractions(binaryInts, edgeStream);
-		OldFormatWriter.writeParticipants(binaryInts, nodeStream);
 	}	
 	
 	
