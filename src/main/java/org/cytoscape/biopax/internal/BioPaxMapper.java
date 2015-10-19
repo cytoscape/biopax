@@ -24,11 +24,7 @@ package org.cytoscape.biopax.internal;
  * #L%
  */
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.StringWriter;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -47,11 +43,7 @@ import org.biopax.paxtools.model.BioPAXLevel;
 import org.biopax.paxtools.model.Model;
 import org.biopax.paxtools.model.level3.*;
 import org.biopax.paxtools.model.level3.Process;
-import org.biopax.paxtools.pattern.miner.OldFormatWriter;
-import org.biopax.paxtools.pattern.miner.SIFInteraction;
-import org.biopax.paxtools.pattern.miner.SIFSearcher;
-import org.biopax.paxtools.pattern.miner.SIFType;
-import org.biopax.paxtools.pattern.miner.SimpleIDFetcher;
+import org.biopax.paxtools.pattern.miner.*;
 import org.biopax.paxtools.util.ClassFilterSet;
 import org.biopax.paxtools.util.Filter;
 import org.cytoscape.biopax.internal.util.AttributeUtil;
@@ -187,20 +179,15 @@ public class BioPaxMapper {
 	 * Constructor. 
 	 * Use this one if you do not plan to create new networks.
 	 * 
-	 * @param model
-	 * @param cyNetworkFactory
+	 * @param model BioPAX Model
+	 * @param cyNetworkFactory Cytoscape network factory
 	 */
 	public BioPaxMapper(Model model, CyNetworkFactory cyNetworkFactory) {
 		this.model = model;
 		this.networkFactory = cyNetworkFactory;
 	}
 	
-
-	public CyNetwork createCyNetwork(String networkName) {
-		return createCyNetwork(networkName, null);
-	}
-	
-	public CyNetwork createCyNetwork(String networkName, CyRootNetwork rootNetwork)  {		
+	public CyNetwork createCyNetwork(String networkName, CyRootNetwork rootNetwork)  {
 		CyNetwork network = (rootNetwork == null) 
 				? networkFactory.createNetwork() 
 					: rootNetwork.addSubNetwork();
@@ -1216,33 +1203,44 @@ public class BioPaxMapper {
 	
 
 	/**
-	 * Converts a BioPAX Model to the Pathway Commons'
-	 * Simple Interactions Format (EXTENDED_BINARY_SIF).
+	 * Converts a BioPAX Model to the
+	 * custom Simple Interactions Format (SIF), where each row
+	 * describes an inferred bio interaction using tab-separated columns:
+	 * URI1, interaction_type, URI2, data_sources, PMIDs, pathway_names
+	 * (the last three columns may contain semicolon-separated multiple values).
 	 * 
 	 * @param m biopax model
 	 * @param sifTypes SIF rules/patterns to use
-	 * @param edgeStream output stream for interactions (edges)
-	 * @param nodeStream output stream for participants (nodes details)
+	 * @param sifOutputStream output stream for the SIF entries
 	 * @throws IOException when data cannot be written, etc.
 	 */
-	public static void convertToExtendedBinarySIF(
+	public static void convertToCustomSIF(
 			Model m,
-//			String idType, //default is URI; TODO use/set preferred nucl.acid/protein ID type later on...
 			SIFType[] sifTypes, //SIF rules/patterns to apply/search
-			OutputStream edgeStream,
-			OutputStream nodeStream
-	) throws IOException {
-
+			OutputStream sifOutputStream) throws IOException
+	{
 		//merge interactions with exactly same properties...
 		ModelUtils.mergeEquivalentInteractions(m);
-
+		//convert to binary interactions
 		SIFSearcher sifSearcher = new SIFSearcher(new SimpleIDFetcher(), sifTypes);
 		Set<SIFInteraction> binaryInts = sifSearcher.searchSIF(m);
+		// write interactions and some of their attributes (publications, datasources, pathways)
+		SIFToText stt = new CustomFormat(
+				OutputColumn.Type.RESOURCE.name(),
+				OutputColumn.Type.PUBMED.name(),
+				OutputColumn.Type.PATHWAY.name()
+		);
 
-		// towrite edgeStream, nodeStream
-		OldFormatWriter.writeInteractions(binaryInts, edgeStream);
-		OldFormatWriter.writeParticipants(binaryInts, nodeStream);
-	}	
+		if (!binaryInts.isEmpty()) {
+			List<SIFInteraction> interList = new ArrayList<SIFInteraction>(binaryInts);
+			Collections.sort(interList);
+			OutputStreamWriter writer = new OutputStreamWriter(sifOutputStream);
+//			writer.write("PARTICIPANT_A\tINTERACTION_TYPE\tPARTICIPANT_B\tINTERACTION_DATA_SOURCE\tINTERACTION_PUBMED_ID\tPATHWAY_NAMES");
+			for (SIFInteraction inter : interList)
+				writer.write(stt.convert(inter)+"\n");
+			writer.close();
+		}
+	}
 	
 	
     /**
