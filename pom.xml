@@ -266,6 +266,12 @@
 			</exclusions>
 		</dependency>
 		<dependency>
+			<groupId>org.biopax.paxtools</groupId>
+			<artifactId>paxtools-trove</artifactId>
+			<version>${paxtools.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
 			<groupId>cytoscape-temp</groupId>
 			<artifactId>woodstox-core-lgpl</artifactId>
 			<version>[4.0.5, 5.0.0)</version>
