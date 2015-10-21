@@ -6,7 +6,7 @@
 	<groupId>org.cytoscape</groupId>
 	<artifactId>biopax</artifactId>
 	<version>3.3.0-SNAPSHOT</version>
-	<name>BioPAX Reader for Cytoscape</name>
+	<name>BioPAX Reader</name>
 	<packaging>bundle</packaging>
 	<description>
 		A Cytoscape 3 core app for importing biological networks from BioPAX resources.
@@ -69,7 +69,6 @@
 				<extensions>true</extensions>
 				<configuration>
 					<instructions>
-						<Bundle-Name>${project.artifactId}</Bundle-Name>
 						<Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
 						<Bundle-Version>${project.version}</Bundle-Version>
 						<Export-Package>!${bundle.namespace}.*</Export-Package>
