@@ -569,12 +569,20 @@ public class BioPaxMapper {
 			// then, for any xref, collect IDs
 			StringBuffer temp = new StringBuffer();			
 			temp.append(ExternalLinkUtil.createLink(link.getDb(), link.getId()));
+
+			String str;
 			
 			if(link instanceof UnificationXref) {
-				uniLinkList.add(temp.toString());
-				uniXrefList.add(link.toString());
+				str = temp.toString();
+				if(!uniLinkList.contains(str))
+					uniLinkList.add(str);
+
+				str = link.toString();
+				if(!uniXrefList.contains(str))
+					uniXrefList.add(str);
 			}
 			else if(link instanceof PublicationXref) {
+
 				PublicationXref xl = (PublicationXref) link;
 				temp.append(" ");
 				if (!xl.getAuthor().isEmpty()) {
@@ -590,12 +598,23 @@ public class BioPaxMapper {
 					}
 					temp.append(")");
 				}
-				pubLinkList.add(temp.toString());				
-				pubXrefList.add(link.toString());
+
+				str = temp.toString();
+				if(!pubLinkList.contains(str))
+					pubLinkList.add(str);
+
+				str = link.toString();
+				if(!pubXrefList.contains(str))
+					pubXrefList.add(str);
 			}
 			else if(link instanceof RelationshipXref) {
-				relLinkList.add(temp.toString());
-				relXrefList.add(link.toString());
+				str = temp.toString();
+				if(!relLinkList.contains(str))
+					relLinkList.add(str);
+
+				str = link.toString();
+				if(!relXrefList.contains(str))
+					relXrefList.add(str);
 			}
 		}
 		
@@ -691,20 +710,20 @@ public class BioPaxMapper {
 					{
 						if (editor.isMultipleCardinality()) {
 							CyRow row = network.getRow(node);
-							List vals = new ArrayList<String>();
+							List<String> vals = new ArrayList<String>();
 							// consider existing attribute values
 							if (row.isSet(attrName)) {
-								Class<?> listElementType = row.getTable()
-										.getColumn(attrName).getListElementType();
+								Class<?> listElementType = row.getTable().getColumn(attrName).getListElementType();
 								List prevList = row.getList(attrName, listElementType);
-								if (prevList != null)
-									vals = prevList;
-							} 
-						
-							if(!vals.contains(value)) 
+//								if (prevList != null) {
+								if(!prevList.contains(value)) prevList.add(value);
+//								} else {
+//									//?
+//								}
+							} else { //create
 								vals.add(value);
-
-							AttributeUtil.set(network, node, attrName, vals, String.class);
+								AttributeUtil.set(network, node, attrName, vals, String.class);
+							}
 						} else {
 							AttributeUtil.set(network, node, attrName, value, String.class);
 						}
@@ -1200,7 +1219,6 @@ public class BioPaxMapper {
 			}
 		}
 	}
-	
 
 	/**
 	 * Converts a BioPAX Model to the
@@ -1241,8 +1259,7 @@ public class BioPaxMapper {
 			writer.close();
 		}
 	}
-	
-	
+
     /**
      * Converts a BioPAX Model to SBGN format.
      *
@@ -1263,4 +1280,14 @@ public class BioPaxMapper {
 			}
     	}, com.sun.xml.bind.v2.ContextFactory.class);
     }
+
+	/** TODO Clean/Normalize a model:
+	 * set displayName;
+	 * auto-generate PRs;
+	 * move U and R Xrefs from PE to the PRs;
+	 * merge equiv. interactions...
+	 */
+	public static void normalize(Model model) {
+
+	}
 }

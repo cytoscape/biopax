@@ -107,7 +107,9 @@ public class CyActivator extends AbstractCyActivator {
 		Properties props = new Properties();
 		props.setProperty("readerDescription","BioPAX reader");
 		props.setProperty("readerId","biopaxNetworkReader");
-		registerAllServices(bc, biopaxReader, props);		
+		registerAllServices(bc, biopaxReader, props);
+
+		System.setProperty("paxtools.CollectionsProvider","org.biopax.paxtools.trove.TProvider");
 	}
 }
 
