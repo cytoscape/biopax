@@ -1239,6 +1239,12 @@ public class BioPaxMapper {
 	{
 		//merge interactions with exactly same properties...
 		ModelUtils.mergeEquivalentInteractions(m);
+		//some extra normalization to get better conversion results
+		ModelUtils.normalizeGenerics(m); //TODO not sure want to apply this...
+		for(SimplePhysicalEntity spe : m.getObjects(SimplePhysicalEntity.class)) {
+			ModelUtils.addMissingEntityReference(m, spe);
+		}
+
 		//convert to binary interactions
 		SIFSearcher sifSearcher = new SIFSearcher(new SimpleIDFetcher(), sifTypes);
 		Set<SIFInteraction> binaryInts = sifSearcher.searchSIF(m);
