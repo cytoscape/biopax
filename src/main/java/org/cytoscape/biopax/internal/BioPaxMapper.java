@@ -1241,7 +1241,7 @@ public class BioPaxMapper {
 		ModelUtils.mergeEquivalentInteractions(m);
 		//some extra normalization to get better conversion results
 		ModelUtils.normalizeGenerics(m); //TODO not sure want to apply this...
-		for(SimplePhysicalEntity spe : m.getObjects(SimplePhysicalEntity.class)) {
+		for(SimplePhysicalEntity spe : new HashSet<SimplePhysicalEntity>(m.getObjects(SimplePhysicalEntity.class))) {
 			ModelUtils.addMissingEntityReference(m, spe);
 		}
 
