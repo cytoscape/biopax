@@ -2,7 +2,7 @@ package org.cytoscape.biopax.internal;
 
 /*
  * #%L
- * Cytoscape BioPAX Impl (biopax-impl)
+ * Cytoscape BioPAX Core App.
  * $Id:$
  * $HeadURL:$
  * %%
@@ -87,11 +87,6 @@ public class BioPaxMapper {
 	public static final String BIOPAX_ENTITY_TYPE = "BIOPAX_TYPE";
 
 	/**
-	 * BioPax Node Attribute: CHEMICAL_MODIFICATIONS_MAP
-	 */
-	public static final String BIOPAX_CHEMICAL_MODIFICATIONS_MAP = "CHEMICAL_MODIFICATIONS_MAP";
-
-	/**
 	 * BioPax Node Attribute: CHEMICAL_MODIFICATIONS_LIST
 	 */
 	public static final String BIOPAX_CHEMICAL_MODIFICATIONS_LIST = "CHEMICAL_MODIFICATIONS";
@@ -115,56 +110,10 @@ public class BioPaxMapper {
 	public static final String BIOPAX_UNIFICATION = "UNIFICATION";
 	public static final String BIOPAX_RELATIONSHIP = "RELATIONSHIP";
 	public static final String BIOPAX_PUBLICATION = "PUBLICATION";
-
-
-	/**
-	 * Node Attribute: IHOP_LINKS
-	 */
 	public static final String BIOPAX_IHOP_LINKS = "IHOP_LINKS";
-
-	
-	/**
-	 * BioPAX Class:  phosphorylation site
-	 */
 	public static final String PHOSPHORYLATION_SITE = "phosphorylation site";
-
-	/**
-	 * BioPAX Class:  protein phosphorylated
-	 */
 	public static final String PROTEIN_PHOSPHORYLATED = "Protein-phosphorylated";
-	
-    public static final String DEFAULT_CHARSET = "UTF-8";
     public static final int MAX_DISPLAY_STRING_LEN = 25;
-	public static final String NULL_ELEMENT_TYPE = "BioPAX Element";	
-	
-	private static final Map<String,String> cellLocationMap;
-	private static final Map<String,String> chemModificationsMap;
-	
-	static {
-		// the following is for node labels
-		cellLocationMap = new HashMap<String, String>();
-		cellLocationMap.put("cellular component unknown", "");
-		cellLocationMap.put("centrosome", "CE");
-		cellLocationMap.put("cytoplasm", "CY");
-		cellLocationMap.put("endoplasmic reticulum", "ER");
-		cellLocationMap.put("endosome", "EN");
-		cellLocationMap.put("extracellular", "EM");
-		cellLocationMap.put("golgi apparatus", "GA");
-		cellLocationMap.put("mitochondrion", "MI");
-		cellLocationMap.put("nucleoplasm", "NP");
-		cellLocationMap.put("nucleus", "NU");
-		cellLocationMap.put("plasma membrane", "PM");
-		cellLocationMap.put("ribosome", "RI");
-		cellLocationMap.put("transmembrane", "TM");
-		
-		chemModificationsMap = new HashMap<String, String>();
-		chemModificationsMap.put("acetylation site", "A");
-		chemModificationsMap.put("glycosylation site", "G");
-		chemModificationsMap.put("phosphorylation site", "P");
-		chemModificationsMap.put("proteolytic cleavage site", "PCS");
-		chemModificationsMap.put("sumoylation site", "S");
-		chemModificationsMap.put("ubiquitination site", "U");	
-	}
 
 	private final Model model;
 	private final CyNetworkFactory networkFactory;
@@ -301,7 +250,7 @@ public class BioPaxMapper {
 		}
 	}
 
-	/**
+	/*
 	 * Adds a Physical Interaction, such as a binding interaction between
 	 * two proteins.
 	 */
@@ -313,7 +262,7 @@ public class BioPaxMapper {
 		}
 	}
 
-	/**
+	/*
 	 * Adds a Conversion Interaction.
 	 */
 	private void addConversionInteraction(CyNetwork network, Conversion interactionElement) {
@@ -330,9 +279,8 @@ public class BioPaxMapper {
 		}
 	}
 
-	/**
+	/*
 	 * Add Edges Between Interaction/Complex Node and Physical Entity Node.
-	 *
 	 */
 	private void linkNodes(CyNetwork network, BioPAXElement bpeA, BioPAXElement bpeB, String type) 
 	{	
@@ -368,7 +316,7 @@ public class BioPaxMapper {
 	}
 
 	
-	/**
+	/*
 	 * Adds a BioPAX Control Interaction.
 	 */
 	private void addControlInteraction(CyNetwork network, Control control) {
@@ -441,13 +389,7 @@ public class BioPaxMapper {
 				
 				// is this a new type of modification ?
 				if (!chemicalModificationsMap.containsKey(mod)) {
-					// determine abbreviation
-					String abbr = getAbbrChemModification(mod);
-
-					// add abreviation to modifications string
-					// (the string "-P...")
-					chemicalModifications += abbr;
-
+					chemicalModifications += mod;
 					// update our map - modification, count
 					chemicalModificationsMap.put(mod, new Integer(1));
 				} else {
@@ -463,7 +405,7 @@ public class BioPaxMapper {
 
 
 	/*
-	 * A helper function to get post-translational modifications string.
+	 * gets post-translational modifications string.
 	 */
 	private static String getModificationsString(NodeAttributesWrapper chemicalModificationsWrapper) 
 	{
@@ -476,35 +418,19 @@ public class BioPaxMapper {
 	}
 
 
-	/**
-	 * A helper function to set chemical modification attributes
+	/*
+	 * sets chemical modification attributes
 	 */
 	private static void setChemicalModificationAttributes(CyNetwork network, CyNode node, 
 			NodeAttributesWrapper chemicalModificationsWrapper) 
 	{
 		Map<String, Object> modificationsMap = (chemicalModificationsWrapper != null)
 				? chemicalModificationsWrapper.getMap() : null;
-
 		if (modificationsMap != null) {
-
-			//  As discussed with Ben on August 29, 2006:
-			//  We will now store chemical modifications in two places:
-			//  1.  a regular list of strings (to be used by the view details panel,
+			// store chemical modifications to be used by the view details panel,
 			//  node attribute browser, and Quick Find.
-			//  2.  a multihashmap, of the following form:
-			//  chemical_modification --> modification(s) --> # of modifications.
-			//  this cannot be represented as a SimpleMap, and must be represented as
-			//  a multi-hashmap.  This second form is used primarily by the custom
-			//  rendering engine for, e.g. drawing number of phosphorylation sies.
-
-			//  Store List of Chemical Modifications Only
 			List<String> list = new ArrayList<String>(modificationsMap.keySet());
 			AttributeUtil.set(network, node, BIOPAX_CHEMICAL_MODIFICATIONS_LIST, list, String.class);
-
-			//  Store Complete Map of Chemical Modifications --> # of Modifications
-			// TODO: shall we migrate the MultiHashMaps that used to be in Cy 2.x?
-//			setMultiHashMap(cyNodeId, nodeAttributes, BIOPAX_CHEMICAL_MODIFICATIONS_MAP, modificationsMap);
-
 			if (modificationsMap.containsKey(PHOSPHORYLATION_SITE)) {
 				AttributeUtil.set(network, node, BIOPAX_ENTITY_TYPE, PROTEIN_PHOSPHORYLATED, String.class);
 			}
@@ -772,8 +698,7 @@ public class BioPaxMapper {
 			if(element instanceof PhysicalEntity) {
 				CellularLocationVocabulary cl = ((PhysicalEntity) element).getCellularLocation();
 				if(cl != null) {
-					String clAbbr = getAbbrCellLocation(cl.toString())
-						.replaceAll("\\[|\\]", "");
+					String clAbbr = cl.toString().replaceAll("\\[|\\]", "");
 					name += (clAbbr.length() > 0) ? ("\n" + clAbbr) : "";
 				}
 			}
@@ -1110,39 +1035,7 @@ public class BioPaxMapper {
 
 		return name;
 	}
-	
-	
-	/**
-	 * Gets abbreviated cellular location term.
-	 * 
-	 * @param value
-	 * @return
-	 */
-	public static String getAbbrCellLocation(String value) {
-		for(String abr: cellLocationMap.keySet()) {
-			if(value.toLowerCase().contains(abr)) {
-				return cellLocationMap.get(abr);
-			}
-		}
-		return value;
-	}
-	
-	/**
-	 * Gets abbreviated chemical modification term.
-	 * 
-	 * @param value
-	 * @return
-	 */
-	public static String getAbbrChemModification(String value) {
-		for(String abr: chemModificationsMap.keySet()) {
-			if(value.toLowerCase().contains(abr)) {
-				return chemModificationsMap.get(abr);
-			}
-		}
-		return value;
-	}
-	
-	
+
 	/**
 	 * For a string longer than a threshold ({@value #MAX_DISPLAY_STRING_LEN}),
 	 * returns a shorter one that looks like "foo...bar", i.e., replaces the middle
@@ -1286,14 +1179,4 @@ public class BioPaxMapper {
 			}
     	}, com.sun.xml.bind.v2.ContextFactory.class);
     }
-
-	/** TODO Clean/Normalize a model:
-	 * set displayName;
-	 * auto-generate PRs;
-	 * move U and R Xrefs from PE to the PRs;
-	 * merge equiv. interactions...
-	 */
-	public static void normalize(Model model) {
-
-	}
 }

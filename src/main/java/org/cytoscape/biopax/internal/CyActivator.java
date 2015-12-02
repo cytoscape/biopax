@@ -2,7 +2,7 @@ package org.cytoscape.biopax.internal;
 
 /*
  * #%L
- * Cytoscape BioPAX Impl (biopax-impl)
+ * Cytoscape BioPAX Core App (BioPAX reader).
  * $Id:$
  * $HeadURL:$
  * %%
@@ -41,19 +41,14 @@ import org.cytoscape.view.model.CyNetworkViewFactory;
 import org.cytoscape.work.TaskManager;
 import org.cytoscape.work.swing.DialogTaskManager;
 import org.cytoscape.work.undo.UndoSupport;
-
 import org.cytoscape.biopax.internal.util.VisualStyleUtil;
-
 import org.cytoscape.model.subnetwork.CyRootNetworkManager;
 import org.cytoscape.io.read.CyNetworkReaderManager;
-
+import org.cytoscape.service.util.AbstractCyActivator;
 
 import org.osgi.framework.BundleContext;
 
-import org.cytoscape.service.util.AbstractCyActivator;
-
 import java.util.Properties;
-
 
 
 public class CyActivator extends AbstractCyActivator {
@@ -71,7 +66,6 @@ public class CyActivator extends AbstractCyActivator {
 		CyNetworkManager cyNetworkManager = getService(bc,CyNetworkManager.class);
 		CyNetworkNaming cyNetworkNaming = getService(bc,CyNetworkNaming.class);
 		CyNetworkFactory cyNetworkFactory = getService(bc,CyNetworkFactory.class);
-//		CyNetworkViewFactory cyNetworkViewFactory = getService(bc,CyNetworkViewFactory.class);
 		StreamUtil streamUtil = getService(bc,StreamUtil.class);
 		VisualMappingManager visualMappingManager = getService(bc,VisualMappingManager.class);
 		VisualStyleFactory visualStyleFactory = getService(bc,VisualStyleFactory.class);
@@ -111,7 +105,7 @@ public class CyActivator extends AbstractCyActivator {
 
 		System.setProperty("paxtools.CollectionsProvider","org.biopax.paxtools.trove.TProvider");
 
-		//TODO move the CytoPanelComponent (results panel) and related code to here
+		//TODO move the CytoPanelComponent (results panel) and related code from CyPath2 app to here...
 	}
 }
 
