@@ -24,6 +24,7 @@ package org.cytoscape.biopax.internal.util;
  * #L%
  */
 
+import java.util.Collection;
 import java.util.List;
 
 import org.cytoscape.model.CyColumn;
@@ -46,7 +47,12 @@ public class AttributeUtil {
 			if (column == null) {
 				if (value instanceof List) {
 					table.createListColumn(name, type, false);
-				} else {
+				}
+				else if (value instanceof Collection) {
+					throw new IllegalArgumentException("Arrt. values collection is not a List: "
+							+ value.getClass().getSimpleName());
+				}
+				else {
 					table.createColumn(name, type, false);
 				}
 			}

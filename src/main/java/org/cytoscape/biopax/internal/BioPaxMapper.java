@@ -50,7 +50,6 @@ import org.cytoscape.biopax.internal.util.AttributeUtil;
 import org.cytoscape.biopax.internal.util.ClassLoaderHack;
 import org.cytoscape.biopax.internal.util.ExternalLink;
 import org.cytoscape.biopax.internal.util.ExternalLinkUtil;
-import org.cytoscape.biopax.internal.util.NodeAttributesWrapper;
 import org.cytoscape.model.CyEdge;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNetworkFactory;
@@ -72,7 +71,7 @@ public class BioPaxMapper {
 	public static final Logger log = LoggerFactory.getLogger(BioPaxMapper.class);
 	
 	/**
-	 * Cytoscape Attribute:  BioPAX RDF ID.
+	 * Cytoscape Attribute:  BioPAX object's URI.
 	 */
 	public static final String BIOPAX_URI = "URI";
 
@@ -113,7 +112,6 @@ public class BioPaxMapper {
 	public static final String BIOPAX_IHOP_LINKS = "IHOP_LINKS";
 	public static final String PHOSPHORYLATION_SITE = "phosphorylation site";
 	public static final String PROTEIN_PHOSPHORYLATED = "Protein-phosphorylated";
-    public static final int MAX_DISPLAY_STRING_LEN = 25;
 
 	private final Model model;
 	private final CyNetworkFactory networkFactory;
@@ -258,7 +256,7 @@ public class BioPaxMapper {
 		//  Add all Participants
 		Collection<Entity> participantElements = interactionElement.getParticipant();
 		for (Entity participantElement : participantElements) {
-			linkNodes(network, interactionElement, (BioPAXElement) participantElement, "participant");
+			linkNodes(network, interactionElement, participantElement, "participant");
 		}
 	}
 
@@ -351,90 +349,50 @@ public class BioPaxMapper {
 	 * Given a binding element (complex or interaction)
 	 * and type (like left or right),
 	 * returns chemical modification (abbreviated form).
-	 *
 	 */
 	private static NodeAttributesWrapper getInteractionChemicalModifications(BioPAXElement participantElement) 
 	{
-		
 		if(participantElement == null) {
 			return null;
 		}
-		
-		// both of these objects will be used to contruct
-		// the NodeAttributesWrapper which gets returned
-		Map<String,Object> chemicalModificationsMap = null;
-		String chemicalModifications = null;
+
+		final Set<String> chemicalModificationsSet = new HashSet<String>();
 
 		// if we are dealing with participant processes (interactions
 		// or complexes), we have to go through the participants to get the
 		// proper chemical modifications
-		Collection<?> modificationFeatures = getValues(participantElement, "feature", "notFeature");
-		// short ciruit routine if empty list
-		if (modificationFeatures == null) {
-			return null;
-		}
-
-		// interate through the list returned from the query
-		for (Object modification : modificationFeatures) {
-			if (modification != null) {
-				// initialize chemicalModifications string if necessary
-				chemicalModifications = (chemicalModifications == null || chemicalModifications.length()==0) 
-					? "-" : chemicalModifications;
-				// initialize chemicalModifications hashmap if necessary
-				chemicalModificationsMap = (chemicalModificationsMap == null) 
-					? new HashMap<String, Object>() : chemicalModificationsMap;
-
-				Object value = getValue((BioPAXElement)modification, "modificationType");
-				String mod = (value == null) ? "" : value.toString();
-				
-				// is this a new type of modification ?
-				if (!chemicalModificationsMap.containsKey(mod)) {
-					chemicalModifications += mod;
-					// update our map - modification, count
-					chemicalModificationsMap.put(mod, new Integer(1));
-				} else {
-					// we've seen this modification before, just update the count
-					Integer count = (Integer) chemicalModificationsMap.get(mod);
-					chemicalModificationsMap.put(mod, ++count);
+		Collection<?> modificationFeatures = getValues(participantElement, "feature");
+		if (modificationFeatures != null) {
+			for (Object modification : modificationFeatures) {
+				if (modification != null) {
+					Object value = getValue((BioPAXElement) modification, "modificationType");
+					if (value != null) {
+						String mod = value.toString();
+						//remove the ClassName_ prefix and square braces -
+						mod = mod.substring(mod.indexOf("_") + 1).replaceAll("\\[|\\]", "");
+						chemicalModificationsSet.add(mod);
+					}
 				}
 			}
 		}
 
-		return new NodeAttributesWrapper(chemicalModificationsMap, chemicalModifications);
-	}
-
-
-	/*
-	 * gets post-translational modifications string.
-	 */
-	private static String getModificationsString(NodeAttributesWrapper chemicalModificationsWrapper) 
-	{
-		// check args
-		if (chemicalModificationsWrapper == null) 
-			return "";
-		else
-			// get chemical modifications
-			return chemicalModificationsWrapper.getAbbreviationString();
-	}
-
-
-	/*
-	 * sets chemical modification attributes
-	 */
-	private static void setChemicalModificationAttributes(CyNetwork network, CyNode node, 
-			NodeAttributesWrapper chemicalModificationsWrapper) 
-	{
-		Map<String, Object> modificationsMap = (chemicalModificationsWrapper != null)
-				? chemicalModificationsWrapper.getMap() : null;
-		if (modificationsMap != null) {
-			// store chemical modifications to be used by the view details panel,
-			//  node attribute browser, and Quick Find.
-			List<String> list = new ArrayList<String>(modificationsMap.keySet());
-			AttributeUtil.set(network, node, BIOPAX_CHEMICAL_MODIFICATIONS_LIST, list, String.class);
-			if (modificationsMap.containsKey(PHOSPHORYLATION_SITE)) {
-				AttributeUtil.set(network, node, BIOPAX_ENTITY_TYPE, PROTEIN_PHOSPHORYLATED, String.class);
+		Collection<?> modificationNotFeatures = getValues(participantElement, "notFeature");
+		if (modificationNotFeatures != null) {
+			for (Object modification : modificationNotFeatures) {
+				if (modification != null) {
+					Object value = getValue((BioPAXElement) modification, "modificationType");
+					if (value != null) {
+						String mod = value.toString();
+						//remove the ClassName_ prefix and square braces;
+						//add "!" upfront (i.e. "NOT")
+						mod = "!" + mod.substring(mod.indexOf("_") + 1).replaceAll("\\[|\\]", "");
+						chemicalModificationsSet.add(mod);
+					}
+				}
 			}
 		}
+
+		return new NodeAttributesWrapper(chemicalModificationsSet);
 	}
 
 	
@@ -629,7 +587,6 @@ public class BioPaxMapper {
 			{
 				if (obj != null && !editor.isUnknown(obj)) {
 					propPath.push(editor.getProperty());
-
 					final String attrName = StringUtils.join(propPath, "/");
 					String value = obj.toString();
 					if (!"".equalsIgnoreCase(value.toString().replaceAll("\\]|\\[", ""))) 
@@ -641,11 +598,7 @@ public class BioPaxMapper {
 							if (row.isSet(attrName)) {
 								Class<?> listElementType = row.getTable().getColumn(attrName).getListElementType();
 								List prevList = row.getList(attrName, listElementType);
-//								if (prevList != null) {
 								if(!prevList.contains(value)) prevList.add(value);
-//								} else {
-//									//?
-//								}
 							} else { //create
 								vals.add(value);
 								AttributeUtil.set(network, node, attrName, vals, String.class);
@@ -675,35 +628,37 @@ public class BioPaxMapper {
 
 		// set the most important attributes
 		AttributeUtil.set(network, node, BIOPAX_URI, element.getUri(), String.class);
-		AttributeUtil.set(network, node, BIOPAX_ENTITY_TYPE, element.getModelInterface().getSimpleName(), String.class);	
-		
-		// add a piece of the BioPAX (RDF/XML without parent|child elements)	
-		
-//		//the following attr. was experimental, not so important for users...
-//		if(network.getNodeCount() < 100) { //- this condition was added for performance/memory...
-//			String owl = BioPaxUtil.toOwl(element); // (requires common-lang-2.4 bundle to be started)
-//			AttributeUtil.set(network, node, CyNetwork.HIDDEN_ATTRS, BioPaxUtil.BIOPAX_DATA, owl, String.class);
-//		}
-		
-//		String name = truncateLongStr(getName(element));
+		AttributeUtil.set(network, node, BIOPAX_ENTITY_TYPE, element.getModelInterface().getSimpleName(), String.class);
+
 		String name = getName(element);
 		
 		if (!(element instanceof Interaction)) {
 			// get chemical modification & cellular location attributes
 			NodeAttributesWrapper chemicalModificationsWrapper = getInteractionChemicalModifications(element);
-			// add modifications to the label/name
-			String modificationsString = getModificationsString(chemicalModificationsWrapper);
-			name += modificationsString;				
+			// set node attributes
+			if(chemicalModificationsWrapper != null) {
+				// add modifications to the label/name
+				name += chemicalModificationsWrapper.toString();
+				//set the node attribute (chem. mod. list)
+				List<String> list = chemicalModificationsWrapper.asList();
+				if (list != null && !list.isEmpty()) {
+					// store chemical modifications to be used by the view details panel, node attribute browser, Quick Find
+					AttributeUtil.set(network, node, BIOPAX_CHEMICAL_MODIFICATIONS_LIST, list, String.class);
+					if (list.contains(PHOSPHORYLATION_SITE)) {
+						AttributeUtil.set(network, node, BIOPAX_ENTITY_TYPE, PROTEIN_PHOSPHORYLATED, String.class);
+					}
+				}
+			}
+
 			// add cellular location to the label/name
 			if(element instanceof PhysicalEntity) {
 				CellularLocationVocabulary cl = ((PhysicalEntity) element).getCellularLocation();
 				if(cl != null) {
-					String clAbbr = cl.toString().replaceAll("\\[|\\]", "");
-					name += (clAbbr.length() > 0) ? ("\n" + clAbbr) : "";
+					String terms = cl.toString();//it's like CellularLocationVocabulary_terms...
+					terms =  terms.substring(terms.indexOf("_") + 1).replaceAll("\\[|\\]", "");
+					name += (terms.length() > 0) ? ("; " + terms) : "";
 				}
 			}
-			// set node attributes
-			setChemicalModificationAttributes(network, node, chemicalModificationsWrapper);	
 		}
 		// update the name (also used for node's label and quick find)
 		AttributeUtil.set(network, node, CyNetwork.NAME, name, String.class);		
@@ -732,7 +687,7 @@ public class BioPaxMapper {
 		}
 		return new ArrayList<ExternalLink>();
 	}
-	
+
 
 	private static List<ExternalLink> extractXrefs(Collection<? extends Xref> xrefs) {
 		List<ExternalLink> dbList = new ArrayList<ExternalLink>();
@@ -775,7 +730,7 @@ public class BioPaxMapper {
 		}
 
 		return dbList;
-	}	
+	}
 
 	
 	private static String ihopLinks(BioPAXElement bpe) {
@@ -819,17 +774,17 @@ public class BioPaxMapper {
 		ClassLoaderHack.runWithHack(new Runnable() {
 			@Override
 			public void run() {
-//				try {
+				try {
 					model[0] =  handler.convertFromOWL(stream);	
-//				} catch (Throwable e) {
-//					log.warn("Import failed: " + e);
-//				}
+				} catch (Throwable e) {
+					log.error("convertFromOwl failed: " + e);
+				}
 			}
 		}, com.ctc.wstx.stax.WstxInputFactory.class);
 		return model[0];
 	}
 
-	
+
 	/**
 	 * Gets the display name of the node
 	 * or URI. 
@@ -847,7 +802,7 @@ public class BioPaxMapper {
 				? bpe.getUri()
 					: StringEscapeUtils.unescapeHtml(nodeName);
 	}
-	
+
 	
 	/**
 	 * Attempts to get the value of any of the BioPAX properties
@@ -880,7 +835,7 @@ public class BioPaxMapper {
 		}
 		return null;
 	}
-	
+
 	
 	/**
 	 * Attempts to get the values of specified BioPAX properties.
@@ -917,7 +872,7 @@ public class BioPaxMapper {
 		
 		return col;
 	}
-	
+
 
 	/**
 	 * Gets all names, if any.
@@ -932,7 +887,7 @@ public class BioPaxMapper {
 		}
 		return names;
 	}
-	
+
 	
 	/**
 	 * Gets the NCBI Taxonomy ID.
@@ -958,7 +913,7 @@ public class BioPaxMapper {
 
 		return taxonomyId;
 	}
-	
+
 	
 	private static <T extends Xref> List<T> getXRefs(BioPAXElement bpe, Class<T> xrefClass, 
 			boolean withMembersIfGeneric) {
@@ -1034,24 +989,6 @@ public class BioPaxMapper {
 		String name = modelName.toString().trim();
 
 		return name;
-	}
-
-	/**
-	 * For a string longer than a threshold ({@value #MAX_DISPLAY_STRING_LEN}),
-	 * returns a shorter one that looks like "foo...bar", i.e., replaces the middle
-	 * part with ellipses to make the shorter. 
-	 * 
-	 * @param str
-	 * @return
-	 */
-	public static String truncateLongStr(String str) {
-		if(str != null) {
-			str = str.replaceAll("[\n\r \t]+", " ");
-			if (str.length() > MAX_DISPLAY_STRING_LEN) {
-				str = str.substring(0, MAX_DISPLAY_STRING_LEN/2-1) + "..." + str.substring(str.length()-MAX_DISPLAY_STRING_LEN/2);
-			}
-		}
-		return str;
 	}
 
 	
@@ -1179,4 +1116,30 @@ public class BioPaxMapper {
 			}
     	}, com.sun.xml.bind.v2.ContextFactory.class);
     }
+
+	private static class NodeAttributesWrapper {
+		// map of cellular location or chemical modifications
+		private Set<String> attributesSet;
+
+		public NodeAttributesWrapper(Set<String> attributesSet) {
+			this.attributesSet = attributesSet;
+		}
+
+		public List<String> asList() {
+			if(attributesSet != null) {
+				List<String> list = new ArrayList<String>(attributesSet);
+				list.sort(null);
+				return list;
+			} else
+				return Collections.emptyList();
+		}
+
+		@Override
+		public String toString() {
+			if(attributesSet != null && !attributesSet.isEmpty()) {
+				return " -" + StringUtils.join(asList(),",");
+			}
+			else return "";
+		}
+	}
 }
