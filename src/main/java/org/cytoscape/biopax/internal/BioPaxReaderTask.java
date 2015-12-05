@@ -277,8 +277,8 @@ public class BioPaxReaderTask extends AbstractTask implements CyNetworkReader {
 			break;
 
 		case SIF:
-			taskMonitor.setStatusMessage("Normalizing the BioPAX model...");
-			BioPaxMapper.normalize(model);
+//			taskMonitor.setStatusMessage("Normalizing the BioPAX model...");
+//			BioPaxMapper.normalize(model);
 
 			//convert BioPAX to the custom binary SIF format (using a tmp file)
 			taskMonitor.setStatusMessage("Mapping BioPAX model to SIF, then to " +

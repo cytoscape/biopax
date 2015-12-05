@@ -2,7 +2,7 @@ package org.cytoscape.biopax.internal.util;
 
 /*
  * #%L
- * Cytoscape BioPAX Impl (biopax-impl)
+ * Cytoscape BioPAX Core App.
  * $Id:$
  * $HeadURL:$
  * %%
@@ -92,16 +92,6 @@ public class VisualStyleUtil {
 	private static final Color COMPLEX_NODE_COLOR = DEFAULT_NODE_COLOR; //new Color(0, 0, 0);
 	private static final Color COMPLEX_NODE_BORDER_COLOR = DEFAULT_NODE_BORDER_COLOR; //COMPLEX_NODE_COLOR;
 	
-	private static final String COMPONENT_OF = "COMPONENT_OF";
-	private static final String COMPONENT_IN_SAME = "IN_SAME_COMPONENT";
-	private static final String SEQUENTIAL_CATALYSIS = "SEQUENTIAL_CATALYSIS";
-	private static final String CONTROLS_STATE_CHANGE = "STATE_CHANGE";
-	private static final String CONTROLS_METABOLIC_CHANGE = "METABOLIC_CATALYSIS";
-	private static final String PARTICIPATES_CONVERSION = "REACTS_WITH";
-	private static final String PARTICIPATES_INTERACTION = "INTERACTS_WITH";
-	private static final String CO_CONTROL = "CO_CONTROL";	
-	private static final String GENERIC_OF = "GENERIC_OF"; 
-	
 	//edge attr. name created by the core SIF reader
 	private static final String INTERACTION = "interaction";
 	
@@ -115,7 +105,6 @@ public class VisualStyleUtil {
 	private VisualStyle simpleBiopaxStyle;
 	private VisualStyle binarySifStyle;
 
-	//TODO use customPhosGraphics? (not migrated from Cy 2.x)
 	// custom node images (phosphorylation)	
 	private static BufferedImage[] customPhosGraphics = null;	
 	
@@ -337,15 +326,6 @@ public class VisualStyleUtil {
 			DiscreteMapping<String, NodeShape> shapeFunction = (DiscreteMapping<String, NodeShape>) discreteFactory
 					.createVisualMappingFunction(BioPaxMapper.BIOPAX_ENTITY_TYPE, String.class, NODE_SHAPE);
 			shapeFunction.putMapValue("Complex", NodeShapeVisualProperty.HEXAGON);
-			shapeFunction.putMapValue("Generic", NodeShapeVisualProperty.OCTAGON);
-			shapeFunction.putMapValue("ComplexGroup", NodeShapeVisualProperty.HEXAGON);
-			shapeFunction.putMapValue("GenericProteinReference", NodeShapeVisualProperty.OCTAGON);
-			shapeFunction.putMapValue("GenericSmallMoleculeReference", NodeShapeVisualProperty.OCTAGON);
-			shapeFunction.putMapValue("GenericDnaReference", NodeShapeVisualProperty.ROUND_RECTANGLE);
-			shapeFunction.putMapValue("GenericDnaRegionReference", NodeShapeVisualProperty.ROUND_RECTANGLE);
-			shapeFunction.putMapValue("GenericRnaReference", NodeShapeVisualProperty.ROUND_RECTANGLE);
-			shapeFunction.putMapValue("GenericRnaRegionReference", NodeShapeVisualProperty.ROUND_RECTANGLE);
-			shapeFunction.putMapValue("GenericEntityReference", NodeShapeVisualProperty.OCTAGON);
 			binarySifStyle.addVisualMappingFunction(shapeFunction);
 
 			// Node color
@@ -353,31 +333,9 @@ public class VisualStyleUtil {
 			binarySifStyle.setDefaultValue(NODE_FILL_COLOR, color);
 			// Complexes and generics are a Different Color.			
 			Color colorLightBlue = new Color(0x99CCFF); //light blue
-			Color colorLavender = new Color(0xCCCCFF); //lavender or so
-			Color colorPR = new Color(0xFF3300); //somewhat coral, orange-pink
-			Color colorTurquoise = new Color(0x33CCCC); //turquoise
 			DiscreteMapping<String, Paint> paintFunction = (DiscreteMapping<String, Paint>) discreteFactory
 					.createVisualMappingFunction(BioPaxMapper.BIOPAX_ENTITY_TYPE, String.class, NODE_FILL_COLOR);
 			paintFunction.putMapValue("Complex", colorLightBlue);
-			paintFunction.putMapValue("Generic", colorLavender);
-			paintFunction.putMapValue("ComplexGroup", colorLightBlue);
-			paintFunction.putMapValue("GenericProteinReference", colorPR);
-			paintFunction.putMapValue("GenericSmallMoleculeReference", colorLavender);
-			paintFunction.putMapValue("GenericDnaReference", colorTurquoise);
-			paintFunction.putMapValue("GenericDnaRegionReference", colorTurquoise);
-			paintFunction.putMapValue("GenericRnaReference", colorTurquoise);
-			paintFunction.putMapValue("GenericRnaRegionReference", colorTurquoise);
-			paintFunction.putMapValue("GenericEntityReference", colorLavender);
-			
-			//may be also consider generic PEs? (if these ever show up)
-//			paintFunction.putMapValue("GenericPhysicalEntity", lightBlue);			
-//			paintFunction.putMapValue("GenericProtein", lightBlue);
-//			paintFunction.putMapValue("GenericSmallMolecule", lightBlue);
-//			paintFunction.putMapValue("GenericDna", lightBlue);
-//			paintFunction.putMapValue("GenericDnaRegion", lightBlue);
-//			paintFunction.putMapValue("GenericRna", lightBlue);
-//			paintFunction.putMapValue("GenericRnaRegion", lightBlue);
-//			paintFunction.putMapValue("GenericGene", lightBlue);
 			
 			binarySifStyle.addVisualMappingFunction(paintFunction);
 
@@ -388,46 +346,37 @@ public class VisualStyleUtil {
 
 			binarySifStyle.setDefaultValue(EDGE_WIDTH, 4.0);
 
-			// Edge color
-			// create a discrete mapper, for mapping edge type to a particular edge color
+			// A discrete mapper, for mapping edge type to a particular edge color
+			// for unselected edges' stroke paint
 			binarySifStyle.setDefaultValue(EDGE_STROKE_UNSELECTED_PAINT, Color.BLACK);
 			paintFunction = (DiscreteMapping<String, Paint>) discreteFactory
 					.createVisualMappingFunction(INTERACTION, String.class, EDGE_STROKE_UNSELECTED_PAINT);
-			paintFunction.putMapValue(PARTICIPATES_CONVERSION, Color.decode("#ccc1da"));
-			paintFunction.putMapValue(PARTICIPATES_INTERACTION, Color.decode("#7030a0"));
-			paintFunction.putMapValue(CONTROLS_STATE_CHANGE, Color.decode("#0070c0"));
-			paintFunction.putMapValue(CONTROLS_METABOLIC_CHANGE, Color.decode("#00b0f0"));
-			paintFunction.putMapValue(SEQUENTIAL_CATALYSIS, Color.decode("#7f7f7f"));
-			paintFunction.putMapValue(CO_CONTROL, Color.decode("#ff0000"));
-			paintFunction.putMapValue(COMPONENT_IN_SAME, Color.decode("#ffff00"));
-			paintFunction.putMapValue(COMPONENT_OF, Color.decode("#ffc000"));
-			paintFunction.putMapValue(GENERIC_OF, Color.BLACK);
+			initEdgeDiscreteMappingValues(paintFunction);
 			binarySifStyle.addVisualMappingFunction(paintFunction);
-			
+
+			// for unselected edges' paint
 			binarySifStyle.setDefaultValue(EDGE_UNSELECTED_PAINT, Color.BLACK);
 			paintFunction = (DiscreteMapping<String, Paint>) discreteFactory
 					.createVisualMappingFunction(INTERACTION, String.class, EDGE_UNSELECTED_PAINT);
-			paintFunction.putMapValue(PARTICIPATES_CONVERSION, Color.decode("#ccc1da"));
-			paintFunction.putMapValue(PARTICIPATES_INTERACTION, Color.decode("#7030a0"));
-			paintFunction.putMapValue(CONTROLS_STATE_CHANGE, Color.decode("#0070c0"));
-			paintFunction.putMapValue(CONTROLS_METABOLIC_CHANGE, Color.decode("#00b0f0"));
-			paintFunction.putMapValue(SEQUENTIAL_CATALYSIS, Color.decode("#7f7f7f"));
-			paintFunction.putMapValue(CO_CONTROL, Color.decode("#ff0000"));
-			paintFunction.putMapValue(COMPONENT_IN_SAME, Color.decode("#ffff00"));
-			paintFunction.putMapValue(COMPONENT_OF, Color.decode("#ffc000"));
-			paintFunction.putMapValue(GENERIC_OF, Color.BLACK);
-			binarySifStyle.addVisualMappingFunction(paintFunction);					
+			initEdgeDiscreteMappingValues(paintFunction);
+			binarySifStyle.addVisualMappingFunction(paintFunction);
 
-			//Edge direction
-			DiscreteMapping<String, ArrowShape> discreteMapping = 
-					(DiscreteMapping<String, ArrowShape>) discreteFactory
+			//Edge direction styles
+			DiscreteMapping<String, ArrowShape> discreteMapping = (DiscreteMapping<String, ArrowShape>) discreteFactory
 					.createVisualMappingFunction(INTERACTION, String.class, EDGE_TARGET_ARROW_SHAPE);
-			discreteMapping.putMapValue(COMPONENT_OF, ArrowShapeVisualProperty.ARROW);
-			discreteMapping.putMapValue(CONTROLS_STATE_CHANGE, ArrowShapeVisualProperty.ARROW);
-			discreteMapping.putMapValue(CONTROLS_METABOLIC_CHANGE, ArrowShapeVisualProperty.ARROW);
-			discreteMapping.putMapValue(SEQUENTIAL_CATALYSIS, ArrowShapeVisualProperty.ARROW);
+			discreteMapping.putMapValue("controls-state-change-of", ArrowShapeVisualProperty.ARROW);
+			discreteMapping.putMapValue("controls-transport-of", ArrowShapeVisualProperty.ARROW);
+			discreteMapping.putMapValue("catalysis-precedes", ArrowShapeVisualProperty.ARROW);
+			discreteMapping.putMapValue("controls-phosphorylation-of", ArrowShapeVisualProperty.ARROW);
+			discreteMapping.putMapValue("controls-expression-of", ArrowShapeVisualProperty.ARROW);
+			discreteMapping.putMapValue("controls-transport-of-chemical", ArrowShapeVisualProperty.ARROW);
+			discreteMapping.putMapValue("controls-production-of", ArrowShapeVisualProperty.ARROW);
+			discreteMapping.putMapValue("consumption-controled-by", ArrowShapeVisualProperty.ARROW);
+			discreteMapping.putMapValue("chemical-affects", ArrowShapeVisualProperty.ARROW);
+			discreteMapping.putMapValue("used-to-produce", ArrowShapeVisualProperty.ARROW);
 			binarySifStyle.addVisualMappingFunction(discreteMapping);
 
+			//set background color
 			binarySifStyle.setDefaultValue(NETWORK_BACKGROUND_PAINT, Color.WHITE);
 
 			// The visual style must be added to the Global Catalog
@@ -436,8 +385,28 @@ public class VisualStyleUtil {
 		}
 		
 		return binarySifStyle;
-	}	
-	
+	}
+
+	private void initEdgeDiscreteMappingValues(DiscreteMapping<String, Paint> paintFunction) {
+		paintFunction.putMapValue("in-complex-with", new Color(0xf000a0));
+
+		paintFunction.putMapValue("interacts-with", new Color(0x005500)); //MolecularInteraction (e.g. PSI-MI)
+		paintFunction.putMapValue("neighbor-of", new Color(0x00aa00));
+		paintFunction.putMapValue("reacts-with", new Color(0x00ff00));
+
+		paintFunction.putMapValue("catalysis-precedes", new Color(0x7000a0));
+		paintFunction.putMapValue("controls-state-change-of", new Color(0x000c0));
+		paintFunction.putMapValue("controls-phosphorylation-of", new Color(0x0000ff));
+		paintFunction.putMapValue("controls-expression-of", new Color(0x00a0a0));
+		paintFunction.putMapValue("controls-production-of", new Color(0x00ccf0));
+		paintFunction.putMapValue("controls-transport-of", new Color(0x700000));
+
+		paintFunction.putMapValue("controls-transport-of-chemical", new Color(0xa00000));
+		paintFunction.putMapValue("consumption-controled-by", new Color(0xff3300));
+		paintFunction.putMapValue("used-to-produce", new Color(0xf75500));
+		paintFunction.putMapValue("chemical-affects", new Color(0xf09000));
+	}
+
 	/**
 	 * Based on given arguments, determines proper rectangle coordinates
 	 * used to render custom node shape.
