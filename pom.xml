@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.cytoscape</groupId>
 	<artifactId>biopax</artifactId>
-	<version>3.3.1</version>
+	<version>3.3.0.1</version>
 	<name>BioPAX Reader</name>
 	<packaging>bundle</packaging>
 	<description>
@@ -69,6 +69,7 @@
 				<extensions>true</extensions>
 				<configuration>
 					<instructions>
+						<Cytoscape-API-Compatibility>3.3.0</Cytoscape-API-Compatibility>
 						<Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
 						<Bundle-Version>${project.version}</Bundle-Version>
 						<Export-Package>!${bundle.namespace}.*</Export-Package>
