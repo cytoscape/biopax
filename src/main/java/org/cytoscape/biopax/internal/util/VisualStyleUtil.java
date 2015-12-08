@@ -163,6 +163,10 @@ public class VisualStyleUtil {
 		// The user may have tweaked the out-of-the box mapping, and we don't
 		// want to over-ride these tweaks.
 		if (simpleBiopaxStyle == null) {
+			//removing the style is required mostly when installing a new version of this app
+			removeBiopaxVisualStyle(BIO_PAX_VISUAL_STYLE);
+
+			// create a new style using the same name
 			simpleBiopaxStyle = styleFactory.createVisualStyle(BIO_PAX_VISUAL_STYLE);
 
 			// unlock node size, color
@@ -285,12 +289,27 @@ public class VisualStyleUtil {
 			simpleBiopaxStyle.addVisualMappingFunction(shape);
 			mappingManager.addVisualStyle(simpleBiopaxStyle);
 		}
-		
+
 		return simpleBiopaxStyle;
 	}
 
-	
-	 /**
+	private void removeBiopaxVisualStyle(String biopaxVisualStyleName) {
+		VisualStyle toRemove = null;
+
+		for(VisualStyle vs : mappingManager.getAllVisualStyles()) {
+			if(biopaxVisualStyleName.equalsIgnoreCase(vs.getTitle())) {
+				toRemove = vs;
+				break;
+			}
+		}
+
+		if(toRemove != null)
+			mappingManager.removeVisualStyle(toRemove);
+		else //ok, if the app starts for the first time
+			LOG.info("Didn't find an existing BioPAX VisualStyle: " + biopaxVisualStyleName);
+	}
+
+	/**
 	 * If the existing Binary SIF style found, use it;
 	 * otherwise, create a new style.
 	 *
@@ -303,6 +322,10 @@ public class VisualStyleUtil {
 		}
 
 		if (binarySifStyle == null) {
+			//removing the style is required mostly when installing a new version of this app
+			removeBiopaxVisualStyle(BINARY_SIF_VISUAL_STYLE);
+
+			// create a new style using the same name
 			binarySifStyle = styleFactory.createVisualStyle(BINARY_SIF_VISUAL_STYLE);
 
 			// set node opacity
