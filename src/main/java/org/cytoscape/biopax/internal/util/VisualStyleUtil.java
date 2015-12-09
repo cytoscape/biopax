@@ -151,263 +151,259 @@ public class VisualStyleUtil {
 		this.passthroughFactory = passthroughFactory;
 	}
 
-	
-	/**
-	 * If an existing BioPAX style found, use it;
-	 * otherwise, create a new one.
-	 * 
-	 * @return VisualStyle Object.
-	 */
-	public synchronized VisualStyle getBioPaxVisualStyle() {
-		// If the BioPAX Visual Style already exists, use this one instead.
-		// The user may have tweaked the out-of-the box mapping, and we don't
-		// want to over-ride these tweaks.
-		if (simpleBiopaxStyle == null) {
-			//removing the style is required mostly when installing a new version of this app
-			removeBiopaxVisualStyle(BIO_PAX_VISUAL_STYLE);
-
-			// create a new style using the same name
-			simpleBiopaxStyle = styleFactory.createVisualStyle(BIO_PAX_VISUAL_STYLE);
-
-			// unlock node size, color
-			for(VisualPropertyDependency<?> vpd : simpleBiopaxStyle.getAllVisualPropertyDependencies()) {
-				if(vpd.getIdString().equals("nodeSizeLocked")) {
-					vpd.setDependency(false);
-				} else if(vpd.getIdString().equals("arrowColorMatchesEdge")) {
-					vpd.setDependency(true);
-				}
-			}
-
-			// Node size
-			// create a discrete mapper, for mapping biopax node type
-			// to a particular node size.
-			DiscreteMapping<String, Double> width = (DiscreteMapping<String, Double>) discreteFactory
-					.createVisualMappingFunction(BIOPAX_ENTITY_TYPE, String.class, NODE_WIDTH);
-			DiscreteMapping<String, Double> height = (DiscreteMapping<String, Double>) discreteFactory
-					.createVisualMappingFunction(BIOPAX_ENTITY_TYPE, String.class, NODE_HEIGHT);
-			// map all interactions to required size
-			for (Class c : BioPaxMapper.getSubclassNames(Interaction.class)) {
-				String entityName = c.getSimpleName();
-				width.putMapValue(entityName,
-						new Double(BIO_PAX_VISUAL_STYLE_PHYSICAL_ENTITY_NODE_WIDTH
-								* BIO_PAX_VISUAL_STYLE_INTERACTION_NODE_SIZE_SCALE));
-				height.putMapValue(entityName,
-						new Double(BIO_PAX_VISUAL_STYLE_PHYSICAL_ENTITY_NODE_HEIGHT
-								* BIO_PAX_VISUAL_STYLE_INTERACTION_NODE_SIZE_SCALE));
-			}
-
-			// map all complex to required size
-			String entityName = "Complex";//c.getSimpleName();
-			width.putMapValue(entityName,
-				new Double(BIO_PAX_VISUAL_STYLE_PHYSICAL_ENTITY_NODE_WIDTH
-					* BIO_PAX_VISUAL_STYLE_COMPLEX_NODE_SIZE_SCALE));
-			height.putMapValue(entityName,
-				new Double(BIO_PAX_VISUAL_STYLE_PHYSICAL_ENTITY_NODE_HEIGHT
-					* BIO_PAX_VISUAL_STYLE_COMPLEX_NODE_SIZE_SCALE));
-			// create and set node height calculator in node appearance calculator
-			simpleBiopaxStyle.setDefaultValue(NODE_WIDTH,
-					BIO_PAX_VISUAL_STYLE_PHYSICAL_ENTITY_NODE_WIDTH);
-			simpleBiopaxStyle.setDefaultValue(NODE_HEIGHT,
-					BIO_PAX_VISUAL_STYLE_PHYSICAL_ENTITY_NODE_HEIGHT);
-			simpleBiopaxStyle.addVisualMappingFunction(width);
-			simpleBiopaxStyle.addVisualMappingFunction(height);
-			
-			// Node label
-			// create pass through mapper for node labels
-			simpleBiopaxStyle.addVisualMappingFunction(passthroughFactory
-					.createVisualMappingFunction(CyNetwork.NAME, String.class,
-							NODE_LABEL));
-			
-			// Node color
-			simpleBiopaxStyle.setDefaultValue(NODE_FILL_COLOR, DEFAULT_NODE_COLOR);
-			// create a discrete mapper, for mapping biopax node type
-			// to a particular node color
-			DiscreteMapping<String, Paint> color = (DiscreteMapping<String, Paint>) discreteFactory
-					.createVisualMappingFunction(BIOPAX_ENTITY_TYPE, String.class, NODE_FILL_COLOR);
-			// map all complex to black
-			color.putMapValue("Complex", COMPLEX_NODE_COLOR);
-			simpleBiopaxStyle.addVisualMappingFunction(color);
-			
-			// Node border color
-			simpleBiopaxStyle.setDefaultValue(NODE_BORDER_PAINT, DEFAULT_NODE_BORDER_COLOR);
-			// create a discrete mapper, for mapping biopax node type
-			// to a particular node color
-			DiscreteMapping<String, Paint> paintFunction = (DiscreteMapping<String, Paint>) discreteFactory
-					.createVisualMappingFunction(BIOPAX_ENTITY_TYPE, String.class, NODE_BORDER_PAINT);
-			// map all complex to black
-			paintFunction.putMapValue("Complex", COMPLEX_NODE_BORDER_COLOR);
-			simpleBiopaxStyle.addVisualMappingFunction(paintFunction);
-			
-			// Target arrows
-			DiscreteMapping<String, ArrowShape> tgtArrowShape = 
-					(DiscreteMapping<String, ArrowShape>) discreteFactory
-						.createVisualMappingFunction(INTERACTION, String.class, EDGE_TARGET_ARROW_SHAPE);
-			tgtArrowShape.putMapValue("right", ArrowShapeVisualProperty.DELTA);
-			tgtArrowShape.putMapValue("controlled", ArrowShapeVisualProperty.DELTA);
-			tgtArrowShape.putMapValue("cofactor", ArrowShapeVisualProperty.DELTA);
-			tgtArrowShape.putMapValue("contains", ArrowShapeVisualProperty.CIRCLE);
-			// Inhibition Edges
-			for (ControlType controlType : ControlType.values()) {
-				if (controlType.toString().startsWith("I"))
-					tgtArrowShape.putMapValue(controlType.toString(),
-							ArrowShapeVisualProperty.T);
-			}
-			// Activation Edges
-			for (ControlType controlType : ControlType.values()) {
-				if (controlType.toString().startsWith("A"))
-					tgtArrowShape.putMapValue(controlType.toString(),
-							ArrowShapeVisualProperty.DELTA);
-			}
-			simpleBiopaxStyle.addVisualMappingFunction(tgtArrowShape);
-			
-			// Node shape
-			simpleBiopaxStyle.setDefaultValue(NODE_SHAPE,
-					NodeShapeVisualProperty.ELLIPSE);
-			// create a discrete mapper, for mapping a biopax type to a shape
-			DiscreteMapping<String, NodeShape> shape = (DiscreteMapping<String, NodeShape>) discreteFactory
-					.createVisualMappingFunction(BIOPAX_ENTITY_TYPE, String.class, NODE_SHAPE);
-			// map all physical entities to circles
-			for (Class<? extends BioPAXElement> claz : BioPaxMapper.getSubclassNames(PhysicalEntity.class)) 
-			{
-				String name = claz.getSimpleName();
-				shape.putMapValue(name, NodeShapeVisualProperty.ELLIPSE);
-			}
-			// use a different shape for Complex nodes
-			shape.putMapValue("Complex", NodeShapeVisualProperty.DIAMOND);
-			// hack for phosphorylated proteins
-			shape.putMapValue(BioPaxMapper.PROTEIN_PHOSPHORYLATED,
-					NodeShapeVisualProperty.ELLIPSE);
-
-			// map all interactions: control to triangles, others to square
-			for (Class<?> c : BioPaxMapper.getSubclassNames(Interaction.class)) {
-				if (Control.class.isAssignableFrom(c))
-					shape.putMapValue(c.getSimpleName(), NodeShapeVisualProperty.TRIANGLE);
-				else 
-					shape.putMapValue(c.getSimpleName(), NodeShapeVisualProperty.RECTANGLE);
-			}
-			
-			simpleBiopaxStyle.addVisualMappingFunction(shape);
-			mappingManager.addVisualStyle(simpleBiopaxStyle);
-		}
-
-		return simpleBiopaxStyle;
-	}
-
-	private void removeBiopaxVisualStyle(String biopaxVisualStyleName) {
-		VisualStyle toRemove = null;
-
-		for(VisualStyle vs : mappingManager.getAllVisualStyles()) {
-			if(biopaxVisualStyleName.equalsIgnoreCase(vs.getTitle())) {
-				toRemove = vs;
-				break;
-			}
-		}
-
-		if(toRemove != null)
-			mappingManager.removeVisualStyle(toRemove);
-		else //ok, if the app starts for the first time
-			LOG.info("Didn't find an existing BioPAX VisualStyle: " + biopaxVisualStyleName);
+	public synchronized  void init() {
+		initBioPaxVisualStyle();
+		initBinarySifVisualStyle();
 	}
 
 	/**
-	 * If the existing Binary SIF style found, use it;
-	 * otherwise, create a new style.
+	 * Gets the BioPAX style.
 	 *
 	 * @return VisualStyle Object.
 	 */
-	public synchronized VisualStyle getBinarySifVisualStyle() {
-		for(VisualStyle vs : mappingManager.getAllVisualStyles()) {
-			if(BINARY_SIF_VISUAL_STYLE.equals(vs.getTitle()))
-				binarySifStyle = vs;
-		}
+	public VisualStyle getBioPaxVisualStyle() {
+		return simpleBiopaxStyle;
+	}
 
-		if (binarySifStyle == null) {
-			//removing the style is required mostly when installing a new version of this app
-			removeBiopaxVisualStyle(BINARY_SIF_VISUAL_STYLE);
-
-			// create a new style using the same name
-			binarySifStyle = styleFactory.createVisualStyle(BINARY_SIF_VISUAL_STYLE);
-
-			// set node opacity
-			binarySifStyle.setDefaultValue(NODE_TRANSPARENCY, 125);
-			
-			// unlock node size and color, edge/arrow color
-			for(VisualPropertyDependency<?> vpd : binarySifStyle.getAllVisualPropertyDependencies()) {
-				if(vpd.getIdString().equals("nodeSizeLocked")) {
-					vpd.setDependency(false);
-				} 
-				else if(vpd.getIdString().equals("arrowColorMatchesEdge")) {
-					vpd.setDependency(true);
-				} 
-			}
-
-			//Node shape
-			// Default shape is an ellipse.
-			binarySifStyle.setDefaultValue(NODE_SHAPE,
-					NodeShapeVisualProperty.ELLIPSE);
-			// Complexes are Hexagons.
-			DiscreteMapping<String, NodeShape> shapeFunction = (DiscreteMapping<String, NodeShape>) discreteFactory
-					.createVisualMappingFunction(BioPaxMapper.BIOPAX_ENTITY_TYPE, String.class, NODE_SHAPE);
-			shapeFunction.putMapValue("Complex", NodeShapeVisualProperty.HEXAGON);
-			binarySifStyle.addVisualMappingFunction(shapeFunction);
-
-			// Node color
-			Color color = new Color(0xFF9999); //LIGHTCORAL
-			binarySifStyle.setDefaultValue(NODE_FILL_COLOR, color);
-			// Complexes and generics are a Different Color.			
-			Color colorLightBlue = new Color(0x99CCFF); //light blue
-			DiscreteMapping<String, Paint> paintFunction = (DiscreteMapping<String, Paint>) discreteFactory
-					.createVisualMappingFunction(BioPaxMapper.BIOPAX_ENTITY_TYPE, String.class, NODE_FILL_COLOR);
-			paintFunction.putMapValue("Complex", colorLightBlue);
-			
-			binarySifStyle.addVisualMappingFunction(paintFunction);
-
-			// Node label
-			// create pass through mapper for node labels	
-			binarySifStyle.addVisualMappingFunction(passthroughFactory
-					.createVisualMappingFunction(CyNetwork.NAME, String.class, NODE_LABEL));
-
-			binarySifStyle.setDefaultValue(EDGE_WIDTH, 4.0);
-
-			// A discrete mapper, for mapping edge type to a particular edge color
-			// for unselected edges' stroke paint
-			binarySifStyle.setDefaultValue(EDGE_STROKE_UNSELECTED_PAINT, Color.BLACK);
-			paintFunction = (DiscreteMapping<String, Paint>) discreteFactory
-					.createVisualMappingFunction(INTERACTION, String.class, EDGE_STROKE_UNSELECTED_PAINT);
-			initEdgeDiscreteMappingValues(paintFunction);
-			binarySifStyle.addVisualMappingFunction(paintFunction);
-
-			// for unselected edges' paint
-			binarySifStyle.setDefaultValue(EDGE_UNSELECTED_PAINT, Color.BLACK);
-			paintFunction = (DiscreteMapping<String, Paint>) discreteFactory
-					.createVisualMappingFunction(INTERACTION, String.class, EDGE_UNSELECTED_PAINT);
-			initEdgeDiscreteMappingValues(paintFunction);
-			binarySifStyle.addVisualMappingFunction(paintFunction);
-
-			//Edge direction styles
-			DiscreteMapping<String, ArrowShape> discreteMapping = (DiscreteMapping<String, ArrowShape>) discreteFactory
-					.createVisualMappingFunction(INTERACTION, String.class, EDGE_TARGET_ARROW_SHAPE);
-			discreteMapping.putMapValue("controls-state-change-of", ArrowShapeVisualProperty.ARROW);
-			discreteMapping.putMapValue("controls-transport-of", ArrowShapeVisualProperty.ARROW);
-			discreteMapping.putMapValue("catalysis-precedes", ArrowShapeVisualProperty.ARROW);
-			discreteMapping.putMapValue("controls-phosphorylation-of", ArrowShapeVisualProperty.ARROW);
-			discreteMapping.putMapValue("controls-expression-of", ArrowShapeVisualProperty.ARROW);
-			discreteMapping.putMapValue("controls-transport-of-chemical", ArrowShapeVisualProperty.ARROW);
-			discreteMapping.putMapValue("controls-production-of", ArrowShapeVisualProperty.ARROW);
-			discreteMapping.putMapValue("consumption-controled-by", ArrowShapeVisualProperty.ARROW);
-			discreteMapping.putMapValue("chemical-affects", ArrowShapeVisualProperty.ARROW);
-			discreteMapping.putMapValue("used-to-produce", ArrowShapeVisualProperty.ARROW);
-			binarySifStyle.addVisualMappingFunction(discreteMapping);
-
-			//set background color
-			binarySifStyle.setDefaultValue(NETWORK_BACKGROUND_PAINT, Color.WHITE);
-
-			// The visual style must be added to the Global Catalog
-			// in order for it to be written out to vizmap.props upon user exit
-			mappingManager.addVisualStyle(binarySifStyle);
-		}
-		
+	/**
+	 * Gets the 'BioPAX_SIF' style.
+	 *
+	 * @return VisualStyle Object.
+	 */
+	public VisualStyle getBinarySifVisualStyle() {
 		return binarySifStyle;
+	}
+
+	private void initBioPaxVisualStyle() {
+		if (simpleBiopaxStyle == null) {
+			simpleBiopaxStyle = findBiopaxVisualStyle(BIO_PAX_VISUAL_STYLE);
+		}
+
+		//removing the style is required mostly when installing a new version of this app
+		if(simpleBiopaxStyle != null)
+			mappingManager.removeVisualStyle(simpleBiopaxStyle);
+
+		// create and add new empty (for now) 'BioPAX' style
+		simpleBiopaxStyle = styleFactory.createVisualStyle(BIO_PAX_VISUAL_STYLE);
+		mappingManager.addVisualStyle(simpleBiopaxStyle);
+
+		// unlock node size, color
+		for(VisualPropertyDependency<?> vpd : simpleBiopaxStyle.getAllVisualPropertyDependencies()) {
+			if(vpd.getIdString().equals("nodeSizeLocked")) {
+				vpd.setDependency(false);
+			} else if(vpd.getIdString().equals("arrowColorMatchesEdge")) {
+				vpd.setDependency(true);
+			}
+		}
+
+		// Node size
+		// create a discrete mapper, for mapping biopax node type
+		// to a particular node size.
+		DiscreteMapping<String, Double> width = (DiscreteMapping<String, Double>) discreteFactory
+				.createVisualMappingFunction(BIOPAX_ENTITY_TYPE, String.class, NODE_WIDTH);
+		DiscreteMapping<String, Double> height = (DiscreteMapping<String, Double>) discreteFactory
+				.createVisualMappingFunction(BIOPAX_ENTITY_TYPE, String.class, NODE_HEIGHT);
+		// map all interactions to required size
+		for (Class c : BioPaxMapper.getSubclassNames(Interaction.class)) {
+			String entityName = c.getSimpleName();
+			width.putMapValue(entityName,
+					new Double(BIO_PAX_VISUAL_STYLE_PHYSICAL_ENTITY_NODE_WIDTH
+							* BIO_PAX_VISUAL_STYLE_INTERACTION_NODE_SIZE_SCALE));
+			height.putMapValue(entityName,
+					new Double(BIO_PAX_VISUAL_STYLE_PHYSICAL_ENTITY_NODE_HEIGHT
+							* BIO_PAX_VISUAL_STYLE_INTERACTION_NODE_SIZE_SCALE));
+		}
+
+		// map all complex to required size
+		String entityName = "Complex";//c.getSimpleName();
+		width.putMapValue(entityName,
+				new Double(BIO_PAX_VISUAL_STYLE_PHYSICAL_ENTITY_NODE_WIDTH
+						* BIO_PAX_VISUAL_STYLE_COMPLEX_NODE_SIZE_SCALE));
+		height.putMapValue(entityName,
+				new Double(BIO_PAX_VISUAL_STYLE_PHYSICAL_ENTITY_NODE_HEIGHT
+						* BIO_PAX_VISUAL_STYLE_COMPLEX_NODE_SIZE_SCALE));
+		// create and set node height calculator in node appearance calculator
+		simpleBiopaxStyle.setDefaultValue(NODE_WIDTH,
+				BIO_PAX_VISUAL_STYLE_PHYSICAL_ENTITY_NODE_WIDTH);
+		simpleBiopaxStyle.setDefaultValue(NODE_HEIGHT,
+				BIO_PAX_VISUAL_STYLE_PHYSICAL_ENTITY_NODE_HEIGHT);
+		simpleBiopaxStyle.addVisualMappingFunction(width);
+		simpleBiopaxStyle.addVisualMappingFunction(height);
+
+		// Node label
+		// create pass through mapper for node labels
+		simpleBiopaxStyle.addVisualMappingFunction(passthroughFactory
+				.createVisualMappingFunction(CyNetwork.NAME, String.class,
+						NODE_LABEL));
+
+		// Node color
+		simpleBiopaxStyle.setDefaultValue(NODE_FILL_COLOR, DEFAULT_NODE_COLOR);
+		// create a discrete mapper, for mapping biopax node type
+		// to a particular node color
+		DiscreteMapping<String, Paint> color = (DiscreteMapping<String, Paint>) discreteFactory
+				.createVisualMappingFunction(BIOPAX_ENTITY_TYPE, String.class, NODE_FILL_COLOR);
+		// map all complex to black
+		color.putMapValue("Complex", COMPLEX_NODE_COLOR);
+		simpleBiopaxStyle.addVisualMappingFunction(color);
+
+		// Node border color
+		simpleBiopaxStyle.setDefaultValue(NODE_BORDER_PAINT, DEFAULT_NODE_BORDER_COLOR);
+		// create a discrete mapper, for mapping biopax node type
+		// to a particular node color
+		DiscreteMapping<String, Paint> paintFunction = (DiscreteMapping<String, Paint>) discreteFactory
+				.createVisualMappingFunction(BIOPAX_ENTITY_TYPE, String.class, NODE_BORDER_PAINT);
+		// map all complex to black
+		paintFunction.putMapValue("Complex", COMPLEX_NODE_BORDER_COLOR);
+		simpleBiopaxStyle.addVisualMappingFunction(paintFunction);
+
+		// Target arrows
+		DiscreteMapping<String, ArrowShape> tgtArrowShape =
+				(DiscreteMapping<String, ArrowShape>) discreteFactory
+						.createVisualMappingFunction(INTERACTION, String.class, EDGE_TARGET_ARROW_SHAPE);
+		tgtArrowShape.putMapValue("right", ArrowShapeVisualProperty.DELTA);
+		tgtArrowShape.putMapValue("controlled", ArrowShapeVisualProperty.DELTA);
+		tgtArrowShape.putMapValue("cofactor", ArrowShapeVisualProperty.DELTA);
+		tgtArrowShape.putMapValue("contains", ArrowShapeVisualProperty.CIRCLE);
+		// Inhibition Edges
+		for (ControlType controlType : ControlType.values()) {
+			if (controlType.toString().startsWith("I"))
+				tgtArrowShape.putMapValue(controlType.toString(),
+						ArrowShapeVisualProperty.T);
+		}
+		// Activation Edges
+		for (ControlType controlType : ControlType.values()) {
+			if (controlType.toString().startsWith("A"))
+				tgtArrowShape.putMapValue(controlType.toString(),
+						ArrowShapeVisualProperty.DELTA);
+		}
+		simpleBiopaxStyle.addVisualMappingFunction(tgtArrowShape);
+
+		// Node shape
+		simpleBiopaxStyle.setDefaultValue(NODE_SHAPE,
+				NodeShapeVisualProperty.ELLIPSE);
+		// create a discrete mapper, for mapping a biopax type to a shape
+		DiscreteMapping<String, NodeShape> shape = (DiscreteMapping<String, NodeShape>) discreteFactory
+				.createVisualMappingFunction(BIOPAX_ENTITY_TYPE, String.class, NODE_SHAPE);
+		// map all physical entities to circles
+		for (Class<? extends BioPAXElement> claz : BioPaxMapper.getSubclassNames(PhysicalEntity.class))
+		{
+			String name = claz.getSimpleName();
+			shape.putMapValue(name, NodeShapeVisualProperty.ELLIPSE);
+		}
+		// use a different shape for Complex nodes
+		shape.putMapValue("Complex", NodeShapeVisualProperty.DIAMOND);
+		// hack for phosphorylated proteins
+		shape.putMapValue(BioPaxMapper.PROTEIN_PHOSPHORYLATED,
+				NodeShapeVisualProperty.ELLIPSE);
+
+		// map all interactions: control to triangles, others to square
+		for (Class<?> c : BioPaxMapper.getSubclassNames(Interaction.class)) {
+			if (Control.class.isAssignableFrom(c))
+				shape.putMapValue(c.getSimpleName(), NodeShapeVisualProperty.TRIANGLE);
+			else
+				shape.putMapValue(c.getSimpleName(), NodeShapeVisualProperty.RECTANGLE);
+		}
+
+		simpleBiopaxStyle.addVisualMappingFunction(shape);
+	}
+
+	private VisualStyle findBiopaxVisualStyle(String biopaxVisualStyleTitle) {
+
+		for(VisualStyle vs : mappingManager.getAllVisualStyles()) {
+			if(biopaxVisualStyleTitle.equals(vs.getTitle())) {
+				return vs;
+			}
+		}
+
+		return null;
+	}
+
+	private void initBinarySifVisualStyle() {
+		if (binarySifStyle == null) {
+			binarySifStyle = findBiopaxVisualStyle(BINARY_SIF_VISUAL_STYLE);
+		}
+		//removing the style is required mostly when installing a new version of this app
+		if(binarySifStyle != null)
+			mappingManager.removeVisualStyle(binarySifStyle);
+
+		// create and add new empty (for now) 'BioPAX_SIF' style
+		binarySifStyle = styleFactory.createVisualStyle(BINARY_SIF_VISUAL_STYLE);
+		mappingManager.addVisualStyle(binarySifStyle);
+
+
+		// set node opacity
+		binarySifStyle.setDefaultValue(NODE_TRANSPARENCY, 125);
+
+		// unlock node size and color, edge/arrow color
+		for(VisualPropertyDependency<?> vpd : binarySifStyle.getAllVisualPropertyDependencies()) {
+			if(vpd.getIdString().equals("nodeSizeLocked")) {
+				vpd.setDependency(false);
+			}
+			else if(vpd.getIdString().equals("arrowColorMatchesEdge")) {
+				vpd.setDependency(true);
+			}
+		}
+
+		//Node shape
+		// Default shape is an ellipse.
+		binarySifStyle.setDefaultValue(NODE_SHAPE,
+				NodeShapeVisualProperty.ELLIPSE);
+		// Complexes are Hexagons.
+		DiscreteMapping<String, NodeShape> shapeFunction = (DiscreteMapping<String, NodeShape>) discreteFactory
+				.createVisualMappingFunction(BioPaxMapper.BIOPAX_ENTITY_TYPE, String.class, NODE_SHAPE);
+		shapeFunction.putMapValue("Complex", NodeShapeVisualProperty.HEXAGON);
+		binarySifStyle.addVisualMappingFunction(shapeFunction);
+
+		// Node color
+		Color color = new Color(0xFF9999); //LIGHTCORAL
+		binarySifStyle.setDefaultValue(NODE_FILL_COLOR, color);
+		// Complexes and generics are a Different Color.
+		Color colorLightBlue = new Color(0x99CCFF); //light blue
+		DiscreteMapping<String, Paint> paintFunction = (DiscreteMapping<String, Paint>) discreteFactory
+				.createVisualMappingFunction(BioPaxMapper.BIOPAX_ENTITY_TYPE, String.class, NODE_FILL_COLOR);
+		paintFunction.putMapValue("Complex", colorLightBlue);
+
+		binarySifStyle.addVisualMappingFunction(paintFunction);
+
+		// Node label
+		// create pass through mapper for node labels
+		binarySifStyle.addVisualMappingFunction(passthroughFactory
+				.createVisualMappingFunction(CyNetwork.NAME, String.class, NODE_LABEL));
+
+		binarySifStyle.setDefaultValue(EDGE_WIDTH, 4.0);
+
+		// A discrete mapper, for mapping edge type to a particular edge color
+		// for unselected edges' stroke paint
+		binarySifStyle.setDefaultValue(EDGE_STROKE_UNSELECTED_PAINT, Color.BLACK);
+		paintFunction = (DiscreteMapping<String, Paint>) discreteFactory
+				.createVisualMappingFunction(INTERACTION, String.class, EDGE_STROKE_UNSELECTED_PAINT);
+		initEdgeDiscreteMappingValues(paintFunction);
+		binarySifStyle.addVisualMappingFunction(paintFunction);
+
+		// for unselected edges' paint
+		binarySifStyle.setDefaultValue(EDGE_UNSELECTED_PAINT, Color.BLACK);
+		paintFunction = (DiscreteMapping<String, Paint>) discreteFactory
+				.createVisualMappingFunction(INTERACTION, String.class, EDGE_UNSELECTED_PAINT);
+		initEdgeDiscreteMappingValues(paintFunction);
+		binarySifStyle.addVisualMappingFunction(paintFunction);
+
+		//Edge direction styles
+		DiscreteMapping<String, ArrowShape> discreteMapping = (DiscreteMapping<String, ArrowShape>) discreteFactory
+				.createVisualMappingFunction(INTERACTION, String.class, EDGE_TARGET_ARROW_SHAPE);
+		discreteMapping.putMapValue("controls-state-change-of", ArrowShapeVisualProperty.ARROW);
+		discreteMapping.putMapValue("controls-transport-of", ArrowShapeVisualProperty.ARROW);
+		discreteMapping.putMapValue("catalysis-precedes", ArrowShapeVisualProperty.ARROW);
+		discreteMapping.putMapValue("controls-phosphorylation-of", ArrowShapeVisualProperty.ARROW);
+		discreteMapping.putMapValue("controls-expression-of", ArrowShapeVisualProperty.ARROW);
+		discreteMapping.putMapValue("controls-transport-of-chemical", ArrowShapeVisualProperty.ARROW);
+		discreteMapping.putMapValue("controls-production-of", ArrowShapeVisualProperty.ARROW);
+		discreteMapping.putMapValue("consumption-controled-by", ArrowShapeVisualProperty.ARROW);
+		discreteMapping.putMapValue("chemical-affects", ArrowShapeVisualProperty.ARROW);
+		discreteMapping.putMapValue("used-to-produce", ArrowShapeVisualProperty.ARROW);
+		binarySifStyle.addVisualMappingFunction(discreteMapping);
+
+		//set background color
+		binarySifStyle.setDefaultValue(NETWORK_BACKGROUND_PAINT, Color.WHITE);
 	}
 
 	private void initEdgeDiscreteMappingValues(DiscreteMapping<String, Paint> paintFunction) {

@@ -92,9 +92,8 @@ public class CyActivator extends AbstractCyActivator {
 				
 		VisualStyleUtil visualStyleUtil = new VisualStyleUtil(visualStyleFactory,
 				visualMappingManager, discreteMappingFunctionFactory, passthroughMappingFunctionFactory);
-		visualStyleUtil.getBioPaxVisualStyle(); //initialize
-		visualStyleUtil.getBinarySifVisualStyle(); //initialize
-			
+		visualStyleUtil.init(); //important
+
 		// create the biopax reader object
 		BioPaxReader biopaxReader = new BioPaxReader(bioPaxFilter, cyServices, visualStyleUtil);		
 		// register/export osgi services
