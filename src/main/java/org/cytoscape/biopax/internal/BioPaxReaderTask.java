@@ -112,7 +112,7 @@ public class BioPaxReaderTask extends AbstractTask implements CyNetworkReader {
 		 * BioPAX to SBGN, and then to Cytoscape network/view mapping:
 		 * converts BioPAX to SBGN-ML (using Paxtools library); next, 
 		 * delegates network/view creation to the first available SBGN anotherReader,
-		 * e.g., CySBGN (if present).
+		 * e.g., CySBGN (when it's available...)
 		 */
 		SBGN("SBGN");
 		
@@ -318,13 +318,16 @@ public class BioPaxReaderTask extends AbstractTask implements CyNetworkReader {
 
 		case SBGN:
 			//convert to SBGN
-			taskMonitor.setStatusMessage("Mapping BioPAX model to SBGN, " +
-					"then to CyNetwork (using the first discovered SBGN reader)...");
-			File sbgnFile = File.createTempFile("tmp_biopax", ".sbgn.xml");
+			taskMonitor.setStatusMessage("Mapping BioPAX model to SBGN...");
+			File sbgnFile = File.createTempFile("biopax", ".sbgn.xml");
 			sbgnFile.deleteOnExit(); 
 			BioPaxMapper.convertToSBGN(model, new FileOutputStream(sbgnFile));
 			// try to discover a SBGN reader to pass the xml data there
-			anotherReader =  cyServices.networkViewReaderManager.getReader(sbgnFile.toURI(), networkName);
+			try {
+				anotherReader = cyServices.networkViewReaderManager.getReader(sbgnFile.toURI(), networkName);
+			} catch (Throwable t) {
+				log.warn("No SBGN reader found or BioPAX-SBGN conversion failed", t.getMessage());
+			}
 			if(anotherReader != null) {				
 				insertTasksAfterCurrentTask(
 					anotherReader, 
@@ -347,9 +350,7 @@ public class BioPaxReaderTask extends AbstractTask implements CyNetworkReader {
 				})
 				;
 			} else {
-				//fail with a message
-				throw new BioPaxReaderError("No SBGN readers found, or BioPAX to SBGN " +
-						"conversion failed (check " + sbgnFile.getAbsolutePath());
+				taskMonitor.setStatusMessage("No SBGN ML reader found - no CyNetwork created");
 			}
 			break;
 		default:
@@ -432,7 +433,7 @@ public class BioPaxReaderTask extends AbstractTask implements CyNetworkReader {
 		case SIF:
 			view = getNetworkViewFactory().createNetworkView(network);
 			break;
-		case SBGN:
+		case SBGN: //works if there is some SBGN reader app registered in Cy3
 		default:
 			view = anotherReader.buildCyNetworkView(network);
 			//TODO: a layout for SBGN views (if not already done)? 

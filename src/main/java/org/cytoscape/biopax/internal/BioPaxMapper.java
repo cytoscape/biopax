@@ -1107,14 +1107,19 @@ public class BioPaxMapper {
 		ModelUtils.mergeEquivalentInteractions(m);
     	
 		//fails when not using this hack (due to another jaxb library version at runtime...)
-    	ClassLoaderHack.runWithHack(new Runnable() {			
-			@Override
-			public void run() {		
+//    	ClassLoaderHack.runWithHack(new Runnable() {
+//			@Override
+//			public void run() {
 				//create a sbgn converter: no blacklist; do auto-layout
-				L3ToSBGNPDConverter converter = new L3ToSBGNPDConverter(null, null, true);
-				converter.writeSBGN(m, out);
-			}
-    	}, com.sun.xml.bind.v2.ContextFactory.class);
+		try {
+			L3ToSBGNPDConverter converter = new L3ToSBGNPDConverter(null, null, true);
+			converter.writeSBGN(m, out);
+			log.debug("Converter BioPAX to SBGN ML (temporary saved in the java tmpdir)");
+		} catch (Throwable t) {
+			log.error("BioPAX to SBGN ML converter failed", t);
+		}
+//			}
+//    	}, com.sun.xml.bind.v2.ContextFactory.class);
     }
 
 	private static class NodeAttributesWrapper {
