@@ -103,8 +103,6 @@ public class CyActivator extends AbstractCyActivator {
 		registerAllServices(bc, biopaxReader, props);
 
 		System.setProperty("paxtools.CollectionsProvider","org.biopax.paxtools.trove.TProvider");
-
-		//TODO move the CytoPanelComponent (results panel) and related code from CyPath2 app to here...
 	}
 }
 
