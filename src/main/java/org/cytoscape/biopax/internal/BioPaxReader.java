@@ -37,6 +37,12 @@ import org.cytoscape.io.CyFileFilter;
 import org.cytoscape.io.read.AbstractInputStreamTaskFactory;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyTable;
+import org.cytoscape.session.events.SessionAboutToBeLoadedEvent;
+import org.cytoscape.session.events.SessionAboutToBeLoadedListener;
+import org.cytoscape.session.events.SessionLoadCancelledEvent;
+import org.cytoscape.session.events.SessionLoadCancelledListener;
+import org.cytoscape.session.events.SessionLoadedEvent;
+import org.cytoscape.session.events.SessionLoadedListener;
 import org.cytoscape.view.layout.CyLayoutAlgorithm;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.events.NetworkViewAddedEvent;
@@ -46,10 +52,13 @@ import org.cytoscape.work.TaskIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BioPaxReader extends AbstractInputStreamTaskFactory implements NetworkViewAddedListener {
+public class BioPaxReader extends AbstractInputStreamTaskFactory implements NetworkViewAddedListener,
+		SessionAboutToBeLoadedListener, SessionLoadCancelledListener, SessionLoadedListener {
 
 	private final CyServices cyServices;
 	private final VisualStyleUtil visualStyleUtil;
+	
+	private boolean loadingSession;
 	
 	private static final Logger LOG = LoggerFactory.getLogger(BioPaxReader.class);
 
@@ -72,12 +81,33 @@ public class BioPaxReader extends AbstractInputStreamTaskFactory implements Netw
 			throw new BioPaxReaderError(e.toString());
 		}
 	}
+	
+	
+	@Override
+	public void handleEvent(SessionAboutToBeLoadedEvent e) {
+		loadingSession = true;
+	}
+	
+	
+	@Override
+	public void handleEvent(SessionLoadedEvent e) {
+		loadingSession = false;
+	}
+
+
+	@Override
+	public void handleEvent(SessionLoadCancelledEvent e) {
+		loadingSession = false;
+	}
 
 
 	@Override
 	public void handleEvent(NetworkViewAddedEvent e) {
-		// always apply the style and layout to new BioPAX views;
-		// i.e., not only for the first time when one's created.
+		// always apply the style and layout to new BioPAX views,
+		// except when they come from a session that is being loaded
+		if(loadingSession)
+			return;
+		
 		final CyNetworkView view = e.getNetworkView();
 		final CyNetwork cyNetwork = view.getModel();	
 		if(isBioPaxNetwork(cyNetwork)) {	
