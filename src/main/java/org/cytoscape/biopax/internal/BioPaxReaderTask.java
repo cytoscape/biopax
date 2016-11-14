@@ -23,8 +23,11 @@ package org.cytoscape.biopax.internal;
  * <http://www.gnu.org/licenses/lgpl-2.1.html>.
  * #L%
  */
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,7 +38,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.biopax.paxtools.model.BioPAXElement;
 import org.biopax.paxtools.model.Model;
 import org.biopax.paxtools.model.level3.Entity;
@@ -401,7 +404,7 @@ public class BioPaxReaderTask extends AbstractTask implements CyNetworkReader {
 		
 		// Take appropriate adjustments, if name already exists
 		name = cyServices.naming.getSuggestedNetworkTitle(
-			StringEscapeUtils.unescapeHtml(name) + 
+			StringEscapeUtils.unescapeHtml4(name) + 
 			" (" + readerMode.getSelectedValue() + ")");
 		
 		log.info("New BioPAX network name is: " + name);

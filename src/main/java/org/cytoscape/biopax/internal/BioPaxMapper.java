@@ -23,13 +23,25 @@ package org.cytoscape.biopax.internal;
  * <http://www.gnu.org/licenses/lgpl-2.1.html>.
  * #L%
  */
-
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
 
-import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.biopax.paxtools.controller.AbstractTraverser;
 import org.biopax.paxtools.controller.ModelUtils;
 import org.biopax.paxtools.controller.ObjectPropertyEditor;
@@ -41,9 +53,36 @@ import org.biopax.paxtools.io.sbgn.L3ToSBGNPDConverter;
 import org.biopax.paxtools.model.BioPAXElement;
 import org.biopax.paxtools.model.BioPAXLevel;
 import org.biopax.paxtools.model.Model;
-import org.biopax.paxtools.model.level3.*;
+import org.biopax.paxtools.model.level3.BioSource;
+import org.biopax.paxtools.model.level3.Catalysis;
+import org.biopax.paxtools.model.level3.CellularLocationVocabulary;
+import org.biopax.paxtools.model.level3.Complex;
+import org.biopax.paxtools.model.level3.Control;
+import org.biopax.paxtools.model.level3.ControlType;
+import org.biopax.paxtools.model.level3.Controller;
+import org.biopax.paxtools.model.level3.Conversion;
+import org.biopax.paxtools.model.level3.Entity;
+import org.biopax.paxtools.model.level3.EntityReference;
+import org.biopax.paxtools.model.level3.Interaction;
+import org.biopax.paxtools.model.level3.Named;
+import org.biopax.paxtools.model.level3.Pathway;
+import org.biopax.paxtools.model.level3.PhysicalEntity;
 import org.biopax.paxtools.model.level3.Process;
-import org.biopax.paxtools.pattern.miner.*;
+import org.biopax.paxtools.model.level3.PublicationXref;
+import org.biopax.paxtools.model.level3.RelationshipTypeVocabulary;
+import org.biopax.paxtools.model.level3.RelationshipXref;
+import org.biopax.paxtools.model.level3.SimplePhysicalEntity;
+import org.biopax.paxtools.model.level3.Stoichiometry;
+import org.biopax.paxtools.model.level3.UnificationXref;
+import org.biopax.paxtools.model.level3.XReferrable;
+import org.biopax.paxtools.model.level3.Xref;
+import org.biopax.paxtools.pattern.miner.CustomFormat;
+import org.biopax.paxtools.pattern.miner.OutputColumn;
+import org.biopax.paxtools.pattern.miner.SIFInteraction;
+import org.biopax.paxtools.pattern.miner.SIFSearcher;
+import org.biopax.paxtools.pattern.miner.SIFToText;
+import org.biopax.paxtools.pattern.miner.SIFType;
+import org.biopax.paxtools.pattern.miner.SimpleIDFetcher;
 import org.biopax.paxtools.util.ClassFilterSet;
 import org.biopax.paxtools.util.Filter;
 import org.cytoscape.biopax.internal.util.AttributeUtil;
@@ -56,7 +95,6 @@ import org.cytoscape.model.CyNetworkFactory;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyRow;
 import org.cytoscape.model.subnetwork.CyRootNetwork;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -800,7 +838,7 @@ public class BioPaxMapper {
 
 		return (nodeName == null || nodeName.isEmpty())
 				? bpe.getUri()
-					: StringEscapeUtils.unescapeHtml(nodeName);
+					: StringEscapeUtils.unescapeHtml4(nodeName);
 	}
 
 	
