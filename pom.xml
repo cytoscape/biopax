@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.cytoscape</groupId>
 	<artifactId>biopax</artifactId>
-	<version>3.3.2</version>
+	<version>3.3.3</version>
 	<name>BioPAX Reader</name>
 	<packaging>bundle</packaging>
 	<description>
