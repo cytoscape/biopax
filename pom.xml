@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.cytoscape</groupId>
 	<artifactId>biopax</artifactId>
-	<version>3.3.3</version>
+	<version>3.3.4</version>
 	<name>BioPAX Reader</name>
 	<packaging>bundle</packaging>
 	<description>
@@ -146,7 +146,7 @@
 		<dependency>
 			<groupId>org.ops4j.pax.logging</groupId>
 			<artifactId>pax-logging-api</artifactId>
-			<version>1.5.2</version>
+			<version>[1.5,2)</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -222,6 +222,10 @@
 			<version>${paxtools.version}</version>
 			<exclusions>
 				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-api</artifactId>
+				</exclusion>
+				<exclusion>
 					<artifactId>log4j</artifactId>
 					<groupId>log4j</groupId>
 				</exclusion>
@@ -237,6 +241,10 @@
 			<version>${paxtools.version}</version>
 			<exclusions>
 				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-api</artifactId>
+				</exclusion>
+				<exclusion>
 					<artifactId>log4j</artifactId>
 					<groupId>log4j</groupId>
 				</exclusion>
@@ -251,6 +259,10 @@
 			<artifactId>sbgn-converter</artifactId>
 			<version>${paxtools.version}</version>
 			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-api</artifactId>
+				</exclusion>
 				<exclusion>
 					<artifactId>jsr173_api</artifactId>
 					<groupId>javax.xml.bind</groupId>
@@ -269,6 +281,12 @@
 			<groupId>org.biopax.paxtools</groupId>
 			<artifactId>paxtools-trove</artifactId>
 			<version>${paxtools.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-api</artifactId>
+				</exclusion>
+			</exclusions>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
