@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.cytoscape</groupId>
 	<artifactId>biopax</artifactId>
-	<version>3.3.4</version>
+	<version>3.4.0</version>
 	<name>BioPAX Reader</name>
 	<packaging>bundle</packaging>
 	<description>
@@ -16,12 +16,12 @@
 	<properties>
 		<bundle.namespace>org.cytoscape.biopax.internal</bundle.namespace>
 		<cytoscape.api.version>3.8.0-SNAPSHOT</cytoscape.api.version>
-		<osgi.api.version>4.2.0</osgi.api.version>
+		<osgi.api.version>6.0.0</osgi.api.version>
 		<paxtools.version>5.0.1</paxtools.version>
 		<junit.version>4.12</junit.version>
-		<maven-compiler-plugin.version>3.3</maven-compiler-plugin.version>
+		<maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
 		<maven-surefire-plugin.version>3.0.0-M3</maven-surefire-plugin.version>
-		<maven-bundle-plugin.version>2.5.4</maven-bundle-plugin.version>
+		<maven-bundle-plugin.version>4.1.0</maven-bundle-plugin.version>
 	</properties>
 
 	<scm>
@@ -51,8 +51,8 @@
 				<version>${maven-compiler-plugin.version}</version>
 				<extensions>true</extensions>
 				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
+					<source>11</source>
+					<target>11</target>
 					<encoding>UTF-8</encoding>
 					<optimize>true</optimize>
 					<showWarnings>true</showWarnings>
