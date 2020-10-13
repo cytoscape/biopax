@@ -18,7 +18,7 @@
 		<cytoscape.api.version>3.8.0</cytoscape.api.version>
 		<osgi.api.version>6.0.0</osgi.api.version>
 		<paxtools.version>5.0.1</paxtools.version>
-		<junit.version>4.12</junit.version>
+		<junit.version>4.13.1</junit.version>
 		<maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
 		<maven-surefire-plugin.version>3.0.0-M3</maven-surefire-plugin.version>
 		<maven-bundle-plugin.version>4.1.0</maven-bundle-plugin.version>
